@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Classes personalizadas para teste */
+body {
+  background-color: #f3f3f3; 
+}
+
