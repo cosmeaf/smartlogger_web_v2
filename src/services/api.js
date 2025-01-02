@@ -1,7 +1,8 @@
 // src/services/api.js
 import axios from 'axios';
 
-const API_URL = 'https://api.smartlogger.io/api/';
+//const API_URL = 'https://api.smartlogger.io/api/';
+const API_URL = 'https://api.smartlogger.com.br/api/';
 
 const api = axios.create({
   baseURL: API_URL,
