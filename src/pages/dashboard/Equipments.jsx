@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FaEdit, FaTrash, FaTools, FaEye, FaPlus } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
@@ -10,7 +10,12 @@ const Equipments = () => {
   const [loading, setLoading] = useState(true);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(0);
+  const [sortColumn, setSortColumn] = useState(null);
+  const [sortDirection, setSortDirection] = useState('asc');
 
+  /**
+   * ✅ Buscar Equipamentos
+   */
   useEffect(() => {
     const fetchEquipments = async () => {
       try {
@@ -68,42 +73,60 @@ const Equipments = () => {
     });
   };
 
-/**
- * Cálculo de Coloração das Linhas
- */
+  /**
+   * ✅ Cálculo de Coloração das Linhas
+   */
+  const getBackgroundColor = (remainingPercentage) => {
+    if (isNaN(remainingPercentage) || remainingPercentage < 0) {
+      return '';
+    }
 
-const getBackgroundColor = (remainingPercentage) => {
-  console.log('remainingPercentage:', remainingPercentage);
+    if (remainingPercentage <= 10) {
+      return 'bg-red-100';
+    }
+    if (remainingPercentage <= 30) {
+      return 'bg-orange-100';
+    }
+    if (remainingPercentage <= 50) {
+      return 'bg-yellow-100';
+    }
 
-  // Garantir que o valor é válido
-  if (isNaN(remainingPercentage) || remainingPercentage < 0) {
-    console.warn('Valor inválido para porcentagem:', remainingPercentage);
     return '';
-  }
-
-  // Definição de cores conforme especificado pelo cliente
-  if (remainingPercentage <= 10) {
-    return 'bg-red-100';
-  }
-  if (remainingPercentage <= 30) {
-    return 'bg-orange-100';
-  }
-  if (remainingPercentage <= 50) {
-    return 'bg-yellow-100';
-  }
-
-  // Maior que 50%, sem cor de fundo
-  return '';
-};
-
-
+  };
 
   /**
-   * ✅ Paginação e Itens por Página
+   * ✅ Ordenação de Colunas
+   */
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const sortedEquipments = [...equipments].sort((a, b) => {
+    if (!sortColumn) return 0;
+
+    const valueA = a[sortColumn] || '';
+    const valueB = b[sortColumn] || '';
+
+    if (typeof valueA === 'number' && typeof valueB === 'number') {
+      return sortDirection === 'asc' ? valueA - valueB : valueB - valueA;
+    }
+
+    return sortDirection === 'asc'
+      ? valueA.toString().localeCompare(valueB.toString())
+      : valueB.toString().localeCompare(valueA.toString());
+  });
+
+  /**
+   * ✅ Paginação
    */
   const offset = currentPage * itemsPerPage;
-  const currentItems = equipments.slice(offset, offset + itemsPerPage);
-  const pageCount = Math.ceil(equipments.length / itemsPerPage);
+  const currentItems = sortedEquipments.slice(offset, offset + itemsPerPage);
+  const pageCount = Math.ceil(sortedEquipments.length / itemsPerPage);
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
@@ -118,6 +141,9 @@ const getBackgroundColor = (remainingPercentage) => {
     return <LoadPage />;
   }
 
+  /**
+   * ✅ Renderização do Componente
+   */
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       {/* Cabeçalho */}
@@ -151,32 +177,21 @@ const getBackgroundColor = (remainingPercentage) => {
         <table className="min-w-full bg-white text-center">
           <thead className="bg-blue-900 text-white">
             <tr>
-              <th>Device ID</th>
-              <th>Nome</th>
-              <th>Modelo</th>
-              <th>Horas de Trabalho</th>
-              <th>Horas Restantes</th>
+              {['device', 'name', 'model', 'worked_hours', 'min_remaining_hours'].map((column) => (
+                <th key={column} onClick={() => handleSort(column)} className="cursor-pointer">
+                  {column.toUpperCase()} {sortColumn === column ? (sortDirection === 'asc' ? '↑' : '↓') : ''}
+                </th>
+              ))}
               <th>Opções</th>
             </tr>
           </thead>
           <tbody>
             {currentItems.map((equipment) => {
-              const validRemainingHours = parseFloat(equipment.min_remaining_hours) || 0;
-              const validAlarmHours = parseFloat(equipment.alarm_hours) || 0;
-
-              // Garantir que não há divisão por zero
               const remainingPercentage =
-                validAlarmHours > 0
-                  ? (validRemainingHours / validAlarmHours) * 100
-                  : 0;
-
-              console.log('remainingPercentage:', remainingPercentage);
+                (parseFloat(equipment.min_remaining_hours || 0) / parseFloat(equipment.alarm_hours || 1)) * 100;
 
               return (
-                <tr
-                  key={equipment.id}
-                  className={`${getBackgroundColor(remainingPercentage)} border-b`}
-                >
+                <tr key={equipment.id} className={`${getBackgroundColor(remainingPercentage)} border-b`}>
                   <td>{equipment.device || 'N/A'}</td>
                   <td>{equipment.name || 'N/A'}</td>
                   <td>{equipment.model || 'N/A'}</td>
@@ -184,7 +199,6 @@ const getBackgroundColor = (remainingPercentage) => {
                   <td>{parseFloat(equipment.min_remaining_hours || 0).toFixed(2)}</td>
                   <td className="flex justify-center space-x-4">
                     <Link to={`/dashboard/equipments/${equipment.id}/edit`} className="text-blue-500">Editar</Link>
-                    <Link to={`/dashboard/equipments/${equipment.id}/detail`} className="text-green-500">Detalhes</Link>
                     <button onClick={() => openDeleteModal(equipment.id)} className="text-red-500">Deletar</button>
                   </td>
                 </tr>
@@ -200,9 +214,7 @@ const getBackgroundColor = (remainingPercentage) => {
           <button
             key={i}
             onClick={() => handlePageChange(i)}
-            className={`px-3 py-1 rounded-md ${
-              currentPage === i ? 'bg-blue-500 text-white' : 'bg-gray-200'
-            }`}
+            className={`px-3 py-1 rounded-md ${currentPage === i ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
           >
             {i + 1}
           </button>
