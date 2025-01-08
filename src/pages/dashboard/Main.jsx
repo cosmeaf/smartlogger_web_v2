@@ -12,7 +12,7 @@ import {
   Legend,
   ArcElement,
 } from 'chart.js';
-import { FaMobileAlt, FaTools, FaWrench, FaUserCog } from 'react-icons/fa'; // Ícones para os cards
+import { FaTractor, FaTools, FaWrench, FaUserCog } from 'react-icons/fa';
 import api from '../../services/api';
 import LoadPage from '../../components/LoadPage';
 
@@ -33,7 +33,7 @@ const Main = () => {
   const [statisticsChartsData, setStatisticsChartsData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchStatisticsCardsData = async () => {
+  const fetchStatisticsData = async () => {
     try {
       const [devices, equipments, maintenances, employees] = await Promise.all([
         api.get('/devices/'),
@@ -42,6 +42,7 @@ const Main = () => {
         api.get('/employees/'),
       ]);
 
+      // Dados para os cards
       const cardsData = [
         {
           title: 'Dispositivos',
@@ -51,7 +52,7 @@ const Main = () => {
             value: `Ativos: ${devices.data.filter((device) => device.status === 'active').length}`,
             label: 'dispositivos ativos',
           },
-          icon: <FaMobileAlt className="h-6 w-6 text-blue-900" />,
+          icon: <FaTractor className="h-8 w-8 text-blue-900" />,
         },
         {
           title: 'Equipamentos',
@@ -61,7 +62,7 @@ const Main = () => {
             value: `Monitorados: ${equipments.data.length}`,
             label: 'equipamentos',
           },
-          icon: <FaTools className="h-6 w-6 text-blue-900" />,
+          icon: <FaTools className="h-8 w-8 text-blue-900" />,
         },
         {
           title: 'Manutenções',
@@ -71,7 +72,7 @@ const Main = () => {
             value: `Pendentes: ${maintenances.data.filter((m) => !m.os).length}`,
             label: 'manutenções pendentes',
           },
-          icon: <FaWrench className="h-6 w-6 text-blue-900" />,
+          icon: <FaWrench className="h-8 w-8 text-blue-900" />,
         },
         {
           title: 'Funcionários',
@@ -81,31 +82,16 @@ const Main = () => {
             value: `Registrados: ${employees.data.length}`,
             label: 'funcionários',
           },
-          icon: <FaUserCog className="h-6 w-6 text-blue-900" />,
+          icon: <FaUserCog className="h-8 w-8 text-blue-900" />,
         },
       ];
-
       setStatisticsCardsData(cardsData);
-    } catch (error) {
-      console.error('Erro ao buscar dados:', error);
-    }
-  };
 
-  const fetchStatisticsChartsData = async () => {
-    try {
-      const [devices, equipments, maintenances] = await Promise.all([
-        api.get('/devices/'),
-        api.get('/equipments/'),
-        api.get('/maintenances/'),
-      ]);
-
-      const devicesChart = {
-        title: 'Dispositivos por Equipamento',
-        description: 'Quantidade de dispositivos por tipo de equipamento',
-        footer: 'Atualizado recentemente',
-        chart: {
+      // Dados para os gráficos
+      const chartsData = [
+        {
+          title: 'Dispositivos por Equipamento',
           type: 'bar',
-          height: 220,
           series: [
             {
               name: 'Dispositivos',
@@ -113,21 +99,13 @@ const Main = () => {
             },
           ],
           options: {
-            xaxis: {
-              categories: equipments.data.map((equipment) => equipment.name),
-            },
-            colors: ['#3498db'],
+            xaxis: { categories: equipments.data.map((equipment) => equipment.name) },
+            height: 150, // Ajustando a altura do gráfico
           },
         },
-      };
-
-      const workedHoursChart = {
-        title: 'Horas Trabalhadas por Equipamento',
-        description: 'Horas trabalhadas por cada equipamento',
-        footer: 'Atualizado recentemente',
-        chart: {
+        {
+          title: 'Horas Trabalhadas por Equipamento',
           type: 'line',
-          height: 220,
           series: [
             {
               name: 'Horas Trabalhadas',
@@ -135,62 +113,60 @@ const Main = () => {
             },
           ],
           options: {
-            xaxis: {
-              categories: equipments.data.map((equipment) => equipment.name),
-            },
-            colors: ['#36a2eb'],
+            xaxis: { categories: equipments.data.map((equipment) => equipment.name) },
+            height: 150, // Ajustando a altura do gráfico
           },
         },
-      };
-
-      const pendingMaintenancesChart = {
-        title: 'Manutenções Pendentes',
-        description: 'Quantidade de manutenções pendentes por equipamento',
-        footer: 'Atualizado recentemente',
-        chart: {
+        {
+          title: 'Manutenções Pendentes',
           type: 'pie',
-          height: 220,
-          series: equipments.data.map(
-            (equipment) => maintenances.data.filter((m) => m.equipment === equipment.id && !m.os).length
+          series: equipments.data.map((equipment) => 
+            maintenances.data.filter((m) => m.equipment === equipment.id && !m.os).length
           ),
           options: {
             labels: equipments.data.map((equipment) => equipment.name),
-            colors: ['#e74c3c', '#f39c12', '#8e44ad', '#3498db', '#2ecc71'],
+            height: 150, // Ajustando a altura do gráfico
           },
         },
-      };
-
-      setStatisticsChartsData([devicesChart, workedHoursChart, pendingMaintenancesChart]);
+        {
+          title: 'Horas Totais Trabalhadas',
+          type: 'bar',
+          series: [
+            {
+              name: 'Horas Totais',
+              data: [equipments.data.reduce((acc, eq) => acc + eq.worked_hours, 0)],
+            },
+          ],
+          options: { 
+            xaxis: { categories: ['Total'] },
+            height: 150, // Ajustando a altura do gráfico
+          },
+        },
+      ];
+      setStatisticsChartsData(chartsData);
     } catch (error) {
-      console.error('Erro ao buscar dados dos gráficos:', error);
+      console.error('Erro ao buscar dados:', error);
     }
+    setLoading(false);
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      await Promise.all([fetchStatisticsCardsData(), fetchStatisticsChartsData()]);
-      setLoading(false);
-    };
-
-    fetchData();
+    fetchStatisticsData();
   }, []);
 
-  const createChart = (chartData) => {
-    const { type, height, series, options } = chartData.chart;
+  const createChart = (chart) => {
     const data = {
-      labels: options.labels || options.xaxis?.categories,
-      datasets: series.map((serie) => ({
+      labels: chart.options?.labels || chart.options?.xaxis?.categories,
+      datasets: chart.series.map((serie) => ({
         label: serie.name,
         data: serie.data,
-        backgroundColor: options.colors || 'rgba(75, 192, 192, 0.6)',
-        borderColor: options.colors || 'rgba(75, 192, 192, 1)',
+        backgroundColor: '#36a2eb',
+        borderColor: '#2c5282',
         borderWidth: 2,
-        fill: options.fill || true,
       })),
     };
-    const ChartComponent = type === 'bar' ? Bar : type === 'line' ? Line : Pie;
-    return <ChartComponent data={data} options={options} height={height} />;
+    const ChartComponent = chart.type === 'bar' ? Bar : chart.type === 'line' ? Line : Pie;
+    return <ChartComponent data={data} />;
   };
 
   if (loading) {
@@ -198,32 +174,27 @@ const Main = () => {
   }
 
   return (
-    <div className="min-h-screen bg-blue-gray-50/50 p-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-6">
+    <div className="p-6 bg-gray-100 min-h-screen">
+      {/* Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {statisticsCardsData.map((card, index) => (
-          <div
-            key={index}
-            className={`bg-blue-900 shadow-lg rounded-lg p-4 flex items-center justify-between text-white`}
-          >
+          <div key={index} className="bg-white rounded-lg shadow-lg p-4 flex items-center gap-4">
+            <div className="p-3 rounded-full bg-gray-200">{card.icon}</div>
             <div>
-              <p className="text-sm">{card.title}</p>
-              <h2 className="text-2xl font-bold">{card.value}</h2>
-              <p className={`text-sm ${card.footer.color}`}>
-                {card.footer.value} <span>{card.footer.label}</span>
-              </p>
+              <h4 className="text-lg">{card.title}</h4>
+              <p className="font-bold text-2xl">{card.value}</p>
             </div>
-            <div className="bg-white rounded-full p-3">{card.icon}</div>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      {/* Gráficos */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {statisticsChartsData.map((chart, index) => (
-          <div key={index} className="bg-white shadow rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-700 mb-4">{chart.title}</h3>
-            <p className="text-sm text-gray-500 mb-2">{chart.description}</p>
-            {createChart(chart)}
-            <p className="text-xs text-gray-400 mt-4">{chart.footer}</p>
+          <div key={index} className="bg-white rounded-lg shadow-lg p-4 flex flex-col justify-between">
+            <h3 className="text-lg font-semibold mb-2">{chart.title}</h3>
+            <div className="flex-1">{createChart(chart)}</div>
+            <p className="text-xs text-gray-400 mt-2 text-center">Atualizado recentemente</p>
           </div>
         ))}
       </div>

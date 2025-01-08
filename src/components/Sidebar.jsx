@@ -1,56 +1,89 @@
+// src/components/Sidebar.js
+
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { FaBars, FaHome, FaUserFriends, FaTruckMonster, FaTractor } from 'react-icons/fa';
-import packageJson from '../../package.json'; 
+import { Link, useLocation } from 'react-router-dom';
+import {
+  FaBars,
+  FaHome,
+  FaUserFriends,
+  FaTruckMonster,
+  FaTractor,
+  FaTimes,
+} from 'react-icons/fa';
+import packageJson from '../../package.json';
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(true);
+  const location = useLocation();
   const version = packageJson.version;
 
   const toggleSidebar = () => {
-    setIsOpen(!isOpen); 
+    setIsOpen(!isOpen);
   };
 
+  // Links de Navegação
+  const navLinks = [
+    { to: '/dashboard', label: 'Início', icon: <FaHome /> },
+    { to: '/dashboard/devices', label: 'Dispositivos', icon: <FaTruckMonster /> },
+    { to: '/dashboard/equipments', label: 'Equipamentos', icon: <FaTractor /> },
+    { to: '/dashboard/employees', label: 'Colaboradores', icon: <FaUserFriends /> },
+  ];
+
   return (
-    <aside className={`h-screen bg-blue-900 text-white transition-all duration-300 ${isOpen ? 'w-64' : 'w-20'}`}>
-      {/* Cabeçalho do sidebar */}
-      <div className="flex items-center justify-between p-4">
-        {isOpen && <span className="font-bold text-2xl">Dashboard</span>}
-        <button onClick={toggleSidebar} className="focus:outline-none">
-          <FaBars className="text-white h-6 w-6 cursor-pointer" />
+    <div
+      className={`flex flex-col bg-blue-900 text-white transition-all duration-300 ${
+        isOpen ? 'w-64' : 'w-20'
+      }`}
+    >
+      {/* Cabeçalho do Sidebar */}
+      <div className="flex items-center justify-between p-4 border-b border-blue-800">
+        {isOpen && <span className="font-bold text-xl">Dashboard</span>}
+        <button
+          onClick={toggleSidebar}
+          className="focus:outline-none"
+          aria-label={isOpen ? 'Colapsar Sidebar' : 'Expandir Sidebar'}
+        >
+          {isOpen ? <FaTimes className="h-6 w-6" /> : <FaBars className="h-6 w-6" />}
         </button>
       </div>
 
-      {/* Links de navegação */}
-      <nav className="mt-8 space-y-4">
-        <Link to="/dashboard" className="flex items-center py-2 px-4 hover:bg-blue-700 rounded-md">
-          <FaHome className="h-6 w-6 text-white" />
-          {isOpen && <span className="ml-4">Início</span>}
-        </Link>
-
-        <Link to="/dashboard/devices" className="flex items-center py-2 px-4 hover:bg-blue-700 rounded-md">
-          <FaTruckMonster className="h-6 w-6 text-white" />
-          {isOpen && <span className="ml-4">Dispositivos</span>}
-        </Link>
-
-        <Link to="/dashboard/equipments" className="flex items-center py-2 px-4 hover:bg-blue-700 rounded-md">
-          <FaTractor className="h-6 w-6 text-white" />
-          {isOpen && <span className="ml-4">Equipamentos</span>}
-        </Link>
-
-        <Link to="/dashboard/employees" className="flex items-center py-2 px-4 hover:bg-blue-700 rounded-md">
-          <FaUserFriends className="h-6 w-6 text-white" />
-          {isOpen && <span className="ml-4">Colaboradores</span>}
-        </Link>
+      {/* Links de Navegação */}
+      <nav className="flex-1 mt-4">
+        {navLinks.map((link) => {
+          const isActive = location.pathname === link.to;
+          return (
+            <Link
+              key={link.to}
+              to={link.to}
+              className={`flex items-center py-3 px-4 hover:bg-blue-700 transition-colors duration-200 ${
+                isActive ? 'bg-blue-700' : ''
+              } relative group ${
+                isOpen ? 'justify-start' : 'justify-center'
+              }`}
+              aria-label={link.label}
+            >
+              <div className={`text-lg ${!isOpen ? 'mx-auto' : 'ml-0'}`}>
+                {link.icon}
+              </div>
+              {isOpen && <span className="ml-4 text-md font-medium">{link.label}</span>}
+              {/* Tooltip */}
+              {!isOpen && (
+                <span className="absolute left-full ml-2 w-max bg-gray-800 text-white text-sm rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-10">
+                  {link.label}
+                </span>
+              )}
+            </Link>
+          );
+        })}
       </nav>
 
-      {/* Versão exibida no rodapé com cor adicionada */}
+      {/* Rodapé com Versão */}
       {isOpen && (
-        <div className="absolute bottom-4 w-full text-center text-sm text-gray-300">
+        <div className="p-4 text-center text-sm text-gray-300">
           <p className="text-yellow-400">Versão: {version}</p>
         </div>
       )}
-    </aside>
+    </div>
   );
 };
 

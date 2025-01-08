@@ -14,11 +14,9 @@ export const registerService = (data) => {
   return apiService.post('register/', data);
 };
 
-
 export const recoveryService = (email) => {
   return apiService.post('recovery/', { email });
 };
-
 
 export const verifyToken = (token) => {
   return apiService.post('verify/', { token });
@@ -26,4 +24,8 @@ export const verifyToken = (token) => {
 
 export const blacklistToken = (refresh) => {
   return apiService.post('blacklist/', { refresh });
+};
+
+export const refreshTokenService = (refresh) => {
+  return apiService.post('refresh/', { refresh });
 };

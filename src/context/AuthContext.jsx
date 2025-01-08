@@ -1,5 +1,7 @@
+// src/context/AuthContext.js
 import React, { createContext, useState, useEffect } from 'react';
 import { loginService, verifyToken, blacklistToken } from '../services/authService';
+import api from '../services/api';
 
 export const AuthContext = createContext();
 
@@ -8,23 +10,25 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const initializeSession = async () => {
-      const access = localStorage.getItem('access');
-      const savedUser = localStorage.getItem('user');
+  const verifyAndSetUser = async () => {
+    const access = localStorage.getItem('access');
+    const savedUser = localStorage.getItem('user');
 
-      if (access && savedUser) {
-        try {
-          await verifyToken(access);
-          setUser(JSON.parse(savedUser));
-        } catch {
-          localStorage.clear();
-        }
+    if (access && savedUser) {
+      try {
+        await verifyToken(access);
+        setUser(JSON.parse(savedUser));
+      } catch (err) {
+        console.error('Erro ao verificar token:', err);
+        setUser(null);
+        localStorage.clear();
       }
-      setLoading(false);
-    };
+    }
+    setLoading(false);
+  };
 
-    initializeSession();
+  useEffect(() => {
+    verifyAndSetUser();
   }, []);
 
   const login = async (email, password) => {

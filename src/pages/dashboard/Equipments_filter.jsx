@@ -164,62 +164,49 @@ const Equipments = () => {
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-      {/* ✅ Cabeçalho com Botão Adicionar Novo */}
-      <div className="mb-6 flex flex-col md:flex-row justify-between items-center">
-        {/* Botões de Filtro */}
-        <div className="flex flex-wrap justify-center gap-4">
-          <input
-            type="text"
-            name="name"
-            placeholder="Filtrar por Nome"
-            value={filters.name}
-            onChange={handleFilterChange}
-            className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <input
-            type="text"
-            name="model"
-            placeholder="Filtrar por Modelo"
-            value={filters.model}
-            onChange={handleFilterChange}
-            className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <input
-            type="number"
-            name="minHours"
-            placeholder="Horas Mínimas"
-            value={filters.minHours}
-            onChange={handleFilterChange}
-            className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <input
-            type="number"
-            name="maxHours"
-            placeholder="Horas Máximas"
-            value={filters.maxHours}
-            onChange={handleFilterChange}
-            className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <button
-            onClick={() => {
-              setFilters({ name: '', model: '', minHours: '', maxHours: '' });
-              setCurrentPage(1);
-            }}
-            className="p-2 bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            aria-label="Limpar Filtros"
-          >
-            Limpar Filtros
-          </button>
-        </div>
-
-        {/* Botão Adicionar Novo Equipamento */}
-        <Link
-          to="/dashboard/equipments/create"
-          className="mt-4 md:mt-0 bg-blue-900 text-white py-2 px-4 rounded-md flex items-center hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          aria-label="Adicionar Novo Equipamento"
+      {/* ✅ Filtros */}
+      <div className="mb-4 flex gap-4 flex-wrap justify-center">
+        <input
+          type="text"
+          name="name"
+          placeholder="Filtrar por Nome"
+          value={filters.name}
+          onChange={handleFilterChange}
+          className="p-2 border rounded-md"
+        />
+        <input
+          type="text"
+          name="model"
+          placeholder="Filtrar por Modelo"
+          value={filters.model}
+          onChange={handleFilterChange}
+          className="p-2 border rounded-md"
+        />
+        <input
+          type="number"
+          name="minHours"
+          placeholder="Horas Mínimas"
+          value={filters.minHours}
+          onChange={handleFilterChange}
+          className="p-2 border rounded-md"
+        />
+        <input
+          type="number"
+          name="maxHours"
+          placeholder="Horas Máximas"
+          value={filters.maxHours}
+          onChange={handleFilterChange}
+          className="p-2 border rounded-md"
+        />
+        <button
+          onClick={() => {
+            setFilters({ name: '', model: '', minHours: '', maxHours: '' });
+            setCurrentPage(1);
+          }}
+          className="p-2 bg-gray-200 rounded-md"
         >
-          <FaPlus className="mr-2" /> Novo Equipamento
-        </Link>
+          Limpar Filtros
+        </button>
       </div>
 
       {/* ✅ Controle de Itens por Página */}
@@ -228,7 +215,7 @@ const Equipments = () => {
         <select
           value={itemsPerPage}
           onChange={handleItemsPerPageChange}
-          className="border border-gray-300 rounded-md py-1 px-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="border border-gray-300 rounded-md py-1 px-2"
         >
           {[10, 25, 50, 75, 100].map((value) => (
             <option key={value} value={value}>
@@ -243,20 +230,14 @@ const Equipments = () => {
         <table className="min-w-full bg-white text-center">
           <thead className="bg-blue-900 text-white">
             <tr>
-              <th className="py-2 px-4">Device ID</th>
-              <th
-                onClick={handleSortByNome}
-                className="py-2 px-4 cursor-pointer flex items-center justify-center"
-              >
-                Nome{' '}
-                <span className="ml-1">
-                  {sortDirection === 'asc' ? '↑' : '↓'}
-                </span>
+              <th className="p-2">Device ID</th>
+              <th onClick={handleSortByNome} className="p-2 cursor-pointer">
+                Nome {sortDirection === 'asc' ? '↑' : '↓'}
               </th>
-              <th className="py-2 px-4">Modelo</th>
-              <th className="py-2 px-4">Horas de Trabalho</th>
-              <th className="py-2 px-4">Horas Restantes</th>
-              <th className="py-2 px-4">Opções</th>
+              <th className="p-2">Modelo</th>
+              <th className="p-2">Horas de Trabalho</th>
+              <th className="p-2">Horas Restantes</th>
+              <th className="p-2">Opções</th>
             </tr>
           </thead>
           <tbody className="text-gray-700">
@@ -268,38 +249,34 @@ const Equipments = () => {
                   equipment.worked_hours
                 )} border-b`}
               >
-                <td className="py-2 px-4">{equipment.device || 'N/A'}</td>
-                <td className="py-2 px-4">{equipment.name}</td>
-                <td className="py-2 px-4">{equipment.model || 'N/A'}</td>
-                <td className="py-2 px-4">{equipment.worked_hours}</td>
-                <td className="py-2 px-4">{equipment.min_remaining_hours}</td>
-                <td className="py-2 px-4">
-                  <div className="flex justify-center space-x-4">
+                <td className="py-2 px-2">{equipment.device || 'N/A'}</td>
+                <td className="py-2 px-2">{equipment.name}</td>
+                <td className="py-2 px-2">{equipment.model || 'N/A'}</td>
+                <td className="py-2 px-2">{equipment.worked_hours}</td>
+                <td className="py-2 px-2">{equipment.min_remaining_hours}</td>
+                <td className="py-2 px-2">
+                  <div className="flex justify-center space-x-2">
                     <Link
                       to={`/dashboard/equipments/${equipment.id}/edit`}
-                      className="text-blue-500 hover:text-blue-700"
-                      aria-label="Editar Equipamento"
+                      className="text-blue-500"
                     >
                       <FaEdit />
                     </Link>
                     <Link
                       to={`/dashboard/equipments/${equipment.id}/detail`}
-                      className="text-green-500 hover:text-green-700"
-                      aria-label="Visualizar Detalhes"
+                      className="text-green-500"
                     >
                       <FaEye />
                     </Link>
                     <button
                       onClick={() => openDeleteModal(equipment.id)}
-                      className="text-red-500 hover:text-red-700"
-                      aria-label="Deletar Equipamento"
+                      className="text-red-500"
                     >
                       <FaTrash />
                     </button>
                     <Link
                       to={`/dashboard/maintenance/${equipment.id}`}
-                      className="text-yellow-500 hover:text-yellow-700"
-                      aria-label="Manutenção"
+                      className="text-yellow-500"
                     >
                       <FaTools />
                     </Link>
@@ -330,7 +307,6 @@ const Equipments = () => {
                 ? 'bg-gray-300 cursor-not-allowed'
                 : 'bg-blue-500 text-white hover:bg-blue-600'
             }`}
-            aria-label="Página Anterior"
           >
             Anterior
           </button>
@@ -349,7 +325,6 @@ const Equipments = () => {
                 ? 'bg-gray-300 cursor-not-allowed'
                 : 'bg-blue-500 text-white hover:bg-blue-600'
             }`}
-            aria-label="Próxima Página"
           >
             Próxima
           </button>
