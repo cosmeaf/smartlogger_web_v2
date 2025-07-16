@@ -9,11 +9,12 @@ import {
   FaTruckMonster,
   FaTractor,
   FaTimes,
+  FaMapMarkedAlt,
 } from 'react-icons/fa';
 import packageJson from '../../package.json';
 
 const Sidebar = () => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const version = packageJson.version;
 
@@ -24,9 +25,10 @@ const Sidebar = () => {
   // Links de Navegação
   const navLinks = [
     { to: '/dashboard', label: 'Início', icon: <FaHome /> },
-    { to: '/dashboard/devices', label: 'Dispositivos', icon: <FaTruckMonster /> },
+    //{ to: '/dashboard/devices', label: 'Dispositivos', icon: <FaTruckMonster /> },
     { to: '/dashboard/equipments', label: 'Equipamentos', icon: <FaTractor /> },
-    { to: '/dashboard/employees', label: 'Colaboradores', icon: <FaUserFriends /> },
+    // { to: '/dashboard/employees', label: 'Colaboradores', icon: <FaUserFriends /> },
+    { external: true, to: 'https://traccar.smartlogger.com.br/login', label: 'Traccar', icon: <FaMapMarkedAlt /> },
   ];
 
   return (
@@ -50,6 +52,29 @@ const Sidebar = () => {
       {/* Links de Navegação */}
       <nav className="flex-1 mt-4">
         {navLinks.map((link) => {
+          if (link.external) {
+            return (
+              <a
+                key={link.to}
+                href={link.to}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex items-center py-3 px-4 hover:bg-blue-700 transition-colors duration-200 relative group ${
+                  isOpen ? 'justify-start' : 'justify-center'
+                }`}
+                aria-label={link.label}
+              >
+                <div className={`text-lg ${!isOpen ? 'mx-auto' : 'ml-0'}`}>{link.icon}</div>
+                {isOpen && <span className="ml-4 text-md font-medium">{link.label}</span>}
+                {/* Tooltip */}
+                {!isOpen && (
+                  <span className="absolute left-full ml-2 w-max bg-gray-800 text-white text-sm rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-10">
+                    {link.label}
+                  </span>
+                )}
+              </a>
+            );
+          }
           const isActive = location.pathname === link.to;
           return (
             <Link
@@ -62,9 +87,7 @@ const Sidebar = () => {
               }`}
               aria-label={link.label}
             >
-              <div className={`text-lg ${!isOpen ? 'mx-auto' : 'ml-0'}`}>
-                {link.icon}
-              </div>
+              <div className={`text-lg ${!isOpen ? 'mx-auto' : 'ml-0'}`}>{link.icon}</div>
               {isOpen && <span className="ml-4 text-md font-medium">{link.label}</span>}
               {/* Tooltip */}
               {!isOpen && (

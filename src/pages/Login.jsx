@@ -1,20 +1,38 @@
+
 import React, { useContext, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import {
+  Avatar,
+  Box,
+  Button,
+  Checkbox,
+  FormControlLabel,
+  IconButton,
+  InputAdornment,
+  Link,
+  TextField,
+  Typography,
+  Paper
+} from '@mui/material';
+
+import { Visibility, VisibilityOff, Email, Lock, Apartment } from '@mui/icons-material';
+
 
 const Login = () => {
   const { login, error } = useContext(AuthContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-
     try {
       const success = await login(email, password);
       if (success) {
@@ -31,88 +49,198 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded shadow-md w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {/* Ondas SVG animadas no rodapé */}
+      <Box sx={{ position: 'absolute', bottom: 0, left: 0, width: '200%', zIndex: 0, pointerEvents: 'none', height: 200, overflow: 'hidden' }}>
+        {/* Onda de trás */}
+        <Box
+          component="svg"
+          viewBox="0 0 1440 320"
+          preserveAspectRatio="none"
+          sx={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            width: '200%',
+            height: 200,
+            fill: '#1565c0',
+            opacity: 0.4,
+            zIndex: 0,
+            animation: 'loginMove 12s linear infinite',
+          }}
+        >
+          <path d="M0,128L80,117.3C160,107,320,85,480,80C640,75,800,85,960,117.3C1120,149,1280,203,1360,229.3L1440,256L1440,320L1360,320C1280,320,1120,320,960,320C800,320,640,320,480,320C320,320,160,320,80,320L0,320Z" />
+        </Box>
+        {/* Onda da frente */}
+        <Box
+          component="svg"
+          viewBox="0 0 1440 320"
+          preserveAspectRatio="none"
+          sx={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            width: '200%',
+            height: 160,
+            fill: '#1976d2',
+            opacity: 0.6,
+            zIndex: 1,
+            animation: 'loginMoveReverse 10s linear infinite reverse',
+          }}
+        >
+          <path d="M0,96L80,106.7C160,117,320,139,480,154.7C640,171,800,181,960,170.7C1120,160,1280,128,1360,112L1440,96L1440,320L1360,320C1280,320,1120,320,960,320C800,320,640,320,480,320C320,320,160,320,80,320L0,320Z" />
+        </Box>
+        {/* Keyframes para animação das ondas */}
+        <style>{`
+          @keyframes loginMove {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+          @keyframes loginMoveReverse {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+        `}</style>
+      </Box>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          px: { xs: 3, sm: 6, md: 8 },
+          py: { xs: 3, sm: 5 },
+          width: { xs: '100%', sm: 420, md: 480 },
+          maxWidth: 520,
+          mx: 'auto',
+          borderRadius: 4,
+          zIndex: 1,
+          position: 'relative',
+          bgcolor: 'background.paper',
+          boxShadow: 4
+        }}
+      >
+        <Avatar sx={{ bgcolor: 'primary.main', mb: 2, width: 56, height: 56, color: 'background.paper' }}>
+          <Apartment fontSize="large" />
+        </Avatar>
+        <Typography variant="h5" fontWeight={700} gutterBottom>
+          Bem-vindo de volta!
+        </Typography>
+        <Typography variant="body1" color="text.secondary" mb={3}>
+          Faça login com seu e-mail
+        </Typography>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <Box sx={{ bgcolor: 'error.light', border: 1, borderColor: 'error.main', color: 'error.dark', px: 2, py: 1, borderRadius: 1, mb: 2 }}>
             {error}
-          </div>
+          </Box>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-gray-700">Email</label>
-            <input
-              type="email"
-              placeholder="Digite seu email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={isLoading}
-              autoComplete="email"
-              className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+        <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            id="email"
+            label="E-mail"
+            autoComplete="email"
+            autoFocus
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Email />
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            name="password"
+            label="Senha"
+            type={showPassword ? 'text' : 'password'}
+            autoComplete="current-password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Lock />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowPassword(prev => !prev)}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          <Box sx={{ mt: 1, mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={rememberMe}
+                  onChange={e => setRememberMe(e.target.checked)}
+                />
+              }
+              label="Lembrar de mim"
             />
-          </div>
-          <div>
-            <label className="block text-gray-700">Senha</label>
-            <input
-              type="password"
-              placeholder="Digite sua senha"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={isLoading}
-              autoComplete="current-password"
-              className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </div>
-          <button
+            <Link
+              component="button"
+              variant="body2"
+              type="button"
+              onClick={() => navigate('/recovery')}
+              tabIndex={0}
+            >
+              Esqueceu a senha?
+            </Link>
+          </Box>
+
+          <Button
             type="submit"
+            fullWidth
+            variant="contained"
+            sx={{ py: 1.5, mb: 2 }}
             disabled={isLoading}
-            className={`w-full py-2 px-4 rounded text-white ${
-              isLoading ? 'bg-blue-300' : 'bg-blue-500 hover:bg-blue-600'
-            }`}
           >
             {isLoading ? 'Carregando...' : 'Entrar'}
-          </button>
-        </form>
+          </Button>
 
-        <div className="mt-6 text-center space-y-2">
-          <p>
-            <span
+          <Typography variant="body2" align="center" color="text.secondary">
+            ou
+          </Typography>
+
+          <Typography variant="body2" align="center" mt={1}>
+            Não tem conta?{' '}
+            <Link
+              component="button"
+              variant="body2"
               onClick={() => navigate('/register')}
-              className="text-blue-500 hover:underline cursor-pointer"
             >
-              Não tem uma conta? Registre-se
-            </span>
-          </p>
-          <p>
-            <span
-              onClick={() => navigate('/recovery')}
-              className="text-blue-500 hover:underline cursor-pointer"
-            >
-              Esqueceu sua senha? Recupere-a aqui
-            </span>
-          </p>
-        </div>
+              Criar agora
+            </Link>
+          </Typography>
+        </Box>
 
-        <div className="mt-4 text-center">
-          <p className="text-gray-500 text-xs">
+        <Box sx={{ mt: 3, textAlign: 'center' }}>
+          <Typography variant="caption" color="text.secondary">
             Para mais informações, visite{' '}
-            <a
-              href="http://api.smartlogger.io"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-500 hover:underline"
-            >
+            <Link href="http://api.smartlogger.io" target="_blank" rel="noopener noreferrer">
               API Docs
-            </a>
-          </p>
-        </div>
-      </div>
-    </div>
+            </Link>
+          </Typography>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

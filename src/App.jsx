@@ -17,6 +17,8 @@ import MaintenanceCreate from './pages/dashboard/MaintenanceCreate';
 import MaintenanceEdit from './pages/dashboard/MaintenanceEdit';
 
 import ProtectedRoute from './components/ProtectedRoute';
+import DeviceLocation from './pages/dashboard/DeviceLocation';
+import DeviceDetails from './pages/dashboard/DeviceDetails';
 
 function App() {
   return (
@@ -40,6 +42,8 @@ function App() {
           >
             <Route index element={<Main />} />
             <Route path="devices" element={<Devices />} />
+            <Route path="devices/:id" element={<DeviceDetails />} />
+            <Route path="devices/location/:id" element={<DeviceLocation />} />
             <Route path="equipments" element={<Equipments />} />
             <Route path="equipments/create" element={<EquipmentCreate />} />
             <Route path="equipments/:id/edit" element={<EquipmentEdit />} />

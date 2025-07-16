@@ -11,6 +11,17 @@ const Maintenance = () => {
   const [maintenanceRecords, setMaintenanceRecords] = useState([]);
   const [resetLogs, setResetLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [equipmentName, setEquipmentName] = useState('');
+  // Buscar nome do equipamento pelo id
+  const fetchEquipmentName = async () => {
+    try {
+      const { data } = await apiService.get('/equipments/');
+      const found = data.find((eq) => String(eq.device_id) === String(equipmentId) || String(eq.id) === String(equipmentId));
+      setEquipmentName(found ? found.name : '');
+    } catch (error) {
+      setEquipmentName('');
+    }
+  };
 
   const fetchMaintenanceRecords = async () => {
     try {
@@ -40,9 +51,11 @@ const Maintenance = () => {
   useEffect(() => {
     fetchMaintenanceRecords();
     fetchResetLogs();
+    fetchEquipmentName();
     const intervalId = setInterval(() => {
       fetchMaintenanceRecords();
       fetchResetLogs();
+      fetchEquipmentName();
     }, 30000);
     return () => clearInterval(intervalId);
   }, [equipmentId]);
@@ -71,7 +84,7 @@ const Maintenance = () => {
     <div className="p-6 bg-gray-100 min-h-screen">
       {/* Tabela de Manutenções */}
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold text-blue-900">Manutenções do Equipamento</h2>
+        <h2 className="text-2xl font-semibold text-blue-900">Manutenções do Equipamento {equipmentName}</h2>
         <Link
           to={`/dashboard/maintenance/${equipmentId}/create`}
           className="bg-blue-900 text-white py-2 px-4 rounded-md flex items-center"

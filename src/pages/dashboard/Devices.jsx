@@ -73,7 +73,7 @@ const Devices = () => {
                   </td>
                   <td className="text-left py-3 px-4">
                     <Link
-                      to={`/dashboard/equipments/location/${device.device_id}`}
+                      to={`/dashboard/devices/location/${device.device_id}`}
                       className="text-blue-500 hover:underline"
                     >
                       Localização
@@ -84,7 +84,7 @@ const Devices = () => {
                   <td className="text-left py-3 px-4">
                     <div className="flex space-x-2">
                       <button
-                        onClick={() => navigate(`/dashboard/equipments/${device.device_id}`)}
+                        onClick={() => navigate(`/dashboard/devices/${device.device_id}`)}
                         className="text-blue-500"
                       >
                         <FaEye className="inline-block" />
