@@ -13,6 +13,7 @@ import {
   ArcElement,
 } from 'chart.js';
 import { FaTractor, FaTools, FaWrench, FaUserCog } from 'react-icons/fa';
+import { useTheme } from '../../context/ThemeContext';
 import api from '../../services/api';
 import LoadPage from '../../components/LoadPage';
 
@@ -37,6 +38,7 @@ const Main = () => {
   const [popupData, setPopupData] = useState(null);
   const [devices, setDevices] = useState([]);
   const [mergedEquipments, setMergedEquipments] = useState([]);
+  const { isDarkMode } = useTheme();
 
   const fetchStatisticsData = async () => {
     try {
@@ -67,7 +69,7 @@ const Main = () => {
             value: '',
             label: '',
           },
-          icon: <FaTractor className="h-8 w-8 text-blue-900" />,
+          icon: <FaTractor className={`h-8 w-8 ${isDarkMode ? 'text-blue-400' : 'text-blue-900'}`} />,
         },
         {
           title: 'Equipamentos',
@@ -77,7 +79,7 @@ const Main = () => {
             value: '',
             label: '',
           },
-          icon: <FaTools className="h-8 w-8 text-blue-900" />,
+          icon: <FaTools className={`h-8 w-8 ${isDarkMode ? 'text-blue-400' : 'text-blue-900'}`} />,
         },
         {
           title: 'Manutenções',
@@ -87,7 +89,7 @@ const Main = () => {
             value: '',
             label: '',
           },
-          icon: <FaWrench className="h-8 w-8 text-blue-900" />,
+          icon: <FaWrench className={`h-8 w-8 ${isDarkMode ? 'text-blue-400' : 'text-blue-900'}`} />,
         },
         {
           title: 'Horas Totais Trabalhadas',
@@ -98,7 +100,7 @@ const Main = () => {
             label: '',
           },
           icon: (
-            <svg className="h-8 w-8 text-blue-900" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <svg className={`h-8 w-8 ${isDarkMode ? 'text-blue-400' : 'text-blue-900'}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" />
             </svg>
@@ -438,11 +440,11 @@ const Main = () => {
               {labels.map((label, idx) => (
                 <div 
                   key={label} 
-                  className="group hover:bg-gray-50 p-3 rounded-lg transition-all duration-300 cursor-pointer border border-gray-100 hover:border-gray-200 hover:shadow-md"
+                  className={`group ${isDarkMode ? 'hover:bg-gray-700 border-gray-600 hover:border-gray-500' : 'hover:bg-gray-50 border-gray-100 hover:border-gray-200'} p-3 rounded-lg transition-all duration-300 cursor-pointer border hover:shadow-md`}
                   style={{ 
                     animationDelay: `${idx * 200}ms`,
                     animation: 'slideInRight 0.6s ease-out forwards',
-                    background: `linear-gradient(135deg, ${colors[idx]}10, ${colors[idx]}05)`
+                    background: `linear-gradient(135deg, ${colors[idx]}${isDarkMode ? '20' : '10'}, ${colors[idx]}${isDarkMode ? '10' : '05'})`
                   }}
                   onClick={() => handleChartClick('maintenance')}
                 >
@@ -458,7 +460,7 @@ const Main = () => {
                       <span className="text-lg">{icons[idx]}</span>
                     </div>
                     <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-800 group-hover:text-gray-900 transition-colors">
+                      <div className={`text-sm font-medium ${isDarkMode ? 'text-gray-200 group-hover:text-white' : 'text-gray-800 group-hover:text-gray-900'} transition-colors`}>
                         {label}
                       </div>
                       <div className="flex items-center gap-2 mt-1">
@@ -468,7 +470,7 @@ const Main = () => {
                         >
                           {values[idx]}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                           {values.reduce((a, b) => a + b, 0) > 0 ? 
                             `${((values[idx] / values.reduce((a, b) => a + b, 0)) * 100).toFixed(1)}%` : 
                             '0%'
@@ -479,7 +481,7 @@ const Main = () => {
                   </div>
                   
                   {/* Barra de progresso */}
-                  <div className="mt-2 bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                  <div className={`mt-2 ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded-full h-1.5 overflow-hidden`}>
                     <div 
                       className="h-1.5 rounded-full transition-all duration-1000 ease-out"
                       style={{ 
@@ -527,7 +529,7 @@ const Main = () => {
             return (
               <div 
                 key={item.device} 
-                className="bg-white rounded-lg p-2 border border-gray-200 hover:shadow-md transition-all duration-300 relative overflow-hidden cursor-pointer"
+                className={`${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'} rounded-lg p-2 border hover:shadow-md transition-all duration-300 relative overflow-hidden cursor-pointer`}
                 style={{ 
                   animationDelay: `${index * 100}ms`,
                   animation: 'fadeInUp 0.6s ease-out forwards'
@@ -535,7 +537,7 @@ const Main = () => {
                 onClick={() => handleChartClick('impact')}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium text-gray-700 truncate">{item.name}</span>
+                  <span className={`text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} truncate`}>{item.name}</span>
                   <span className={`text-xs px-1 py-0.5 rounded-full ${
                     impactLevel > 3 ? 'text-red-700 bg-red-100' :
                     impactLevel > 1.5 ? 'text-orange-700 bg-orange-100' :
@@ -556,7 +558,7 @@ const Main = () => {
                         stroke="currentColor" 
                         strokeWidth="4" 
                         fill="none" 
-                        className="text-gray-200"
+                        className={`${isDarkMode ? 'text-gray-600' : 'text-gray-200'}`}
                       />
                       <circle 
                         cx="24" 
@@ -578,8 +580,8 @@ const Main = () => {
                       />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-xs font-bold text-gray-800">{impactLevel.toFixed(1)}</span>
-                      <span className="text-xs text-gray-500">G</span>
+                      <span className={`text-xs font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{impactLevel.toFixed(1)}</span>
+                      <span className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>G</span>
                     </div>
                     
                     {/* Efeito de pulso para impactos altos */}
@@ -609,7 +611,7 @@ const Main = () => {
             return (
               <div 
                 key={item.device} 
-                className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-2 hover:shadow-md transition-all duration-300 cursor-pointer"
+                className={`${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200'} rounded-lg p-2 hover:shadow-md transition-all duration-300 cursor-pointer border`}
                 style={{ 
                   animationDelay: `${index * 120}ms`,
                   animation: 'slideInLeft 0.6s ease-out forwards'
@@ -617,8 +619,8 @@ const Main = () => {
                 onClick={() => handleChartClick('acceleration')}
               >
                 <div className="mb-1">
-                  <span className="text-xs font-medium text-gray-700 truncate block">{item.name}</span>
-                  <span className="text-xs text-gray-500">Total: {totalAccel.toFixed(1)} m/s²</span>
+                  <span className={`text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} truncate block`}>{item.name}</span>
+                  <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total: {totalAccel.toFixed(1)} m/s²</span>
                 </div>
                 
                 <div className="space-y-1">
@@ -628,8 +630,8 @@ const Main = () => {
                     { label: 'Z', value: item.z, color: 'bg-blue-500' }
                   ].map((axis, axisIndex) => (
                     <div key={axis.label} className="flex items-center gap-1">
-                      <span className="text-xs font-medium text-gray-600 w-2">{axis.label}:</span>
-                      <div className="flex-1 bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                      <span className={`text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} w-2`}>{axis.label}:</span>
+                      <div className={`flex-1 ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded-full h-1.5 overflow-hidden`}>
                         <div 
                           className={`h-1.5 ${axis.color} transition-all duration-1000 ease-out`}
                           style={{ 
@@ -638,7 +640,7 @@ const Main = () => {
                           }}
                         />
                       </div>
-                      <span className="text-xs font-bold text-gray-800 min-w-[1.5rem] text-right">
+                      <span className={`text-xs font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} min-w-[1.5rem] text-right`}>
                         {axis.value.toFixed(1)}
                       </span>
                     </div>
@@ -674,7 +676,7 @@ const Main = () => {
             return (
               <div 
                 key={item.device} 
-                className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-2 flex flex-col items-center justify-center hover:shadow-md transition-all duration-300 cursor-pointer"
+                className={`${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200'} rounded-lg p-2 flex flex-col items-center justify-center hover:shadow-md transition-all duration-300 cursor-pointer border`}
                 style={{ 
                   animationDelay: `${index * 100}ms`,
                   animation: 'fadeInUp 0.6s ease-out forwards'
@@ -683,7 +685,7 @@ const Main = () => {
               >
                 <div className="relative w-12 h-12 mb-1">
                   <svg className="w-12 h-12 transform -rotate-90">
-                    <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="3" fill="none" className="text-gray-200"/>
+                    <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="3" fill="none" className={`${isDarkMode ? 'text-gray-600' : 'text-gray-200'}`}/>
                     <circle 
                       cx="24" 
                       cy="24" 
@@ -699,11 +701,11 @@ const Main = () => {
                     />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-xs font-bold text-gray-800">{item.speed}</span>
+                    <span className={`text-xs font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{item.speed}</span>
                   </div>
                 </div>
-                <span className="text-xs text-gray-600 text-center truncate w-full">{item.name}</span>
-                <span className="text-xs text-gray-500">km/h</span>
+                <span className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-center truncate w-full`}>{item.name}</span>
+                <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>km/h</span>
                 {item.speed > 15 && (
                   <span className="text-xs px-1 py-0.5 rounded-full bg-red-100 text-red-700 mt-1">
                     Limite!
@@ -730,7 +732,7 @@ const Main = () => {
             return (
               <div 
                 key={item.device} 
-                className="bg-white rounded-lg p-2 border border-gray-200 hover:shadow-md transition-all duration-300 cursor-pointer"
+                className={`${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'} rounded-lg p-2 border hover:shadow-md transition-all duration-300 cursor-pointer`}
                 style={{ 
                   animationDelay: `${index * 80}ms`,
                   animation: 'slideInLeft 0.5s ease-out forwards'
@@ -738,12 +740,12 @@ const Main = () => {
                 onClick={() => handleChartClick('satellite')}
               >
                 <div className="mb-2">
-                  <span className="text-xs font-medium text-gray-700 truncate block">{item.name}</span>
+                  <span className={`text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} truncate block`}>{item.name}</span>
                   <div className="flex items-center justify-between mt-1">
                     <span className={`text-xs px-1 py-0.5 rounded-full ${signalColor}`}>
                       {signalQuality}
                     </span>
-                    <span className="text-xs font-bold text-gray-800">{item.satellites} sat</span>
+                    <span className={`text-xs font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{item.satellites} sat</span>
                   </div>
                 </div>
                 <div className="flex justify-center">
@@ -757,7 +759,7 @@ const Main = () => {
                               : item.satellites >= 6 ? 'bg-blue-500'
                               : item.satellites >= 4 ? 'bg-orange-500' 
                               : 'bg-red-500'
-                            : 'bg-gray-200'
+                            : isDarkMode ? 'bg-gray-600' : 'bg-gray-200'
                         }`}
                         style={{
                           animation: `barGrow 0.8s ease-out ${index * 0.1 + bar * 0.05}s both`
@@ -804,11 +806,11 @@ const Main = () => {
           <div className="w-full h-full flex flex-col" style={{ minHeight: '300px' }}>
             {/* Header com estatísticas rápidas */}
             <div className="flex justify-between items-center mb-4 px-2">
-              <div className="text-sm text-gray-600">
+              <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                 <span className="font-semibold">{equipmentData.length}</span> equipamentos
               </div>
-              <div className="text-sm text-gray-600">
-                Total: <span className="font-semibold text-blue-600">
+              <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Total: <span className={`font-semibold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
                   {equipmentData.reduce((acc, item) => acc + item.hours, 0).toLocaleString('pt-BR')}h
                 </span>
               </div>
@@ -826,7 +828,7 @@ const Main = () => {
                     return (
                       <div 
                         key={item.name} 
-                        className="flex items-center gap-3 py-0.1 px-2 rounded-lg hover:bg-blue-50 transition-all duration-200 cursor-pointer group"
+                        className={`flex items-center gap-3 py-0.1 px-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-blue-50'} transition-all duration-200 cursor-pointer group`}
                         style={{ 
                           animationDelay: `${index * 50}ms`,
                           animation: 'slideInLeft 0.4s ease-out forwards'
@@ -834,22 +836,22 @@ const Main = () => {
                         onClick={() => handleChartClick('worked_hours')}
                       >
                         {/* Ranking */}
-                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white text-xs font-bold">
+                        <div className={`flex items-center justify-center w-5 h-5 rounded-full ${isDarkMode ? 'bg-gradient-to-br from-blue-600 to-blue-700' : 'bg-gradient-to-br from-blue-500 to-blue-600'} text-white text-xs font-bold`}>
                           {index + 1}
                         </div>
                         
                         {/* Nome do equipamento */}
                         <div className="min-w-[110px] max-w-[110px]">
-                          <span className="text-sm font-medium text-gray-800 truncate block group-hover:text-blue-700 transition-colors">
+                          <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300 group-hover:text-blue-400' : 'text-gray-800 group-hover:text-blue-700'} truncate block transition-colors`}>
                             {item.name || 'Sem nome'}
                           </span>
                         </div>
                         
                         {/* Barra de progresso */}
                         <div className="flex-1 relative">
-                          <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-sm">
+                          <div className={`w-full ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded-full h-3 overflow-hidden shadow-sm`}>
                             <div
-                              className="h-3 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 rounded-full relative transition-all duration-700 ease-out group-hover:from-blue-500 group-hover:to-blue-700"
+                              className={`h-3 bg-gradient-to-r ${isDarkMode ? 'from-blue-500 via-blue-600 to-blue-700 group-hover:from-blue-600 group-hover:to-blue-800' : 'from-blue-400 via-blue-500 to-blue-600 group-hover:from-blue-500 group-hover:to-blue-700'} rounded-full relative transition-all duration-700 ease-out`}
                               style={{ 
                                 width: `${Math.max(percentage, 2)}%`,
                                 animation: `expandWidth 1s ease-out ${index * 0.05}s both`
@@ -868,7 +870,7 @@ const Main = () => {
                         
                         {/* Valor das horas */}
                         <div className="min-w-[55px] text-right">
-                          <span className="text-sm font-bold text-gray-800 group-hover:text-blue-700 transition-colors">
+                          <span className={`text-sm font-bold ${isDarkMode ? 'text-gray-200 group-hover:text-blue-400' : 'text-gray-800 group-hover:text-blue-700'} transition-colors`}>
                             {item.hours.toLocaleString('pt-BR')}h
                           </span>
                         </div>
@@ -890,8 +892,8 @@ const Main = () => {
             </div>
 
             {/* Footer com legenda */}
-            <div className="flex items-center justify-center mt-3 pt-2 border-t border-gray-200">
-              <div className="flex items-center gap-4 text-xs text-gray-500">
+            <div className={`flex items-center justify-center mt-3 pt-2 border-t ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`}>
+              <div className={`flex items-center gap-4 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 <div className="flex items-center gap-1">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                   <span>Alto uso</span>
@@ -901,7 +903,7 @@ const Main = () => {
                   <span>Uso médio</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                  <div className={`w-2 h-2 ${isDarkMode ? 'bg-gray-500' : 'bg-gray-400'} rounded-full`}></div>
                   <span>Baixo uso</span>
                 </div>
               </div>
@@ -918,7 +920,7 @@ const Main = () => {
   }
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+    <div className="p-6 min-h-screen">
       <style jsx>{`
         @keyframes fadeInUp {
           from {
@@ -1023,18 +1025,18 @@ const Main = () => {
         {statisticsCardsData.map((card, index) => (
           <div 
             key={index} 
-            className="bg-white rounded-xl shadow-lg p-4 flex items-center gap-3 hover:shadow-xl transition-all duration-300 border border-gray-100 group"
+            className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-xl shadow-lg p-4 flex items-center gap-3 hover:shadow-xl transition-all duration-300 border group`}
             style={{ 
               animationDelay: `${index * 100}ms`,
               animation: 'fadeInUp 0.5s ease-out forwards'
             }}
           >
-            <div className="p-3 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 group-hover:from-blue-100 group-hover:to-blue-200 transition-all duration-300">
+            <div className={`p-3 rounded-xl ${isDarkMode ? 'bg-gradient-to-br from-blue-900 to-blue-800' : 'bg-gradient-to-br from-blue-50 to-blue-100'} group-hover:${isDarkMode ? 'from-blue-800 group-hover:to-blue-700' : 'from-blue-100 group-hover:to-blue-200'} transition-all duration-300`}>
               {card.icon}
             </div>
             <div className="flex-1">
-              <h4 className="text-base font-medium text-gray-700 mb-1">{card.title}</h4>
-              <p className="font-bold text-2xl text-gray-900">{card.value}</p>
+              <h4 className={`text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>{card.title}</h4>
+              <p className={`font-bold text-2xl ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{card.value}</p>
               {card.footer.value && (
                 <p className={`text-sm ${card.footer.color} font-medium`}>
                   {card.footer.value}
@@ -1051,23 +1053,23 @@ const Main = () => {
           return (
             <div
               key={index}
-              className="bg-white rounded-lg shadow-lg p-4 flex flex-col justify-between"
+              className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-lg shadow-lg p-4 flex flex-col justify-between border`}
             >
-              <h3 className="text-lg font-semibold mb-2">{chart.title}</h3>
+              <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{chart.title}</h3>
               <div className="flex-1">{createChart(chart)}</div>
-              <p className="text-xs text-gray-400 mt-2 text-center">Atualizado recentemente</p>
+              <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} mt-2 text-center`}>Atualizado recentemente</p>
             </div>
           );
         })}
         {/* Box de alerta de temperatura como gráfico */}
-        <div className="bg-white rounded-lg shadow-lg p-4 flex flex-col justify-between overflow-hidden">
+        <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-lg shadow-lg p-4 flex flex-col justify-between overflow-hidden border`}>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
-            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+            <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'} flex items-center gap-2`}>
               <span className="text-xl">🌡️</span>
               Temperatura dos Equipamentos
             </h3>
-            <div className="flex items-center gap-2 mt-2 md:mt-0 bg-gray-50 px-3 py-1.5 rounded-lg">
-              <label htmlFor="alertTemp" className="text-xs font-medium text-gray-700">Alerta acima de:</label>
+            <div className={`flex items-center gap-2 mt-2 md:mt-0 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} px-3 py-1.5 rounded-lg`}>
+              <label htmlFor="alertTemp" className={`text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Alerta acima de:</label>
               <input
                 id="alertTemp"
                 type="number"
@@ -1075,15 +1077,15 @@ const Main = () => {
                 max={150}
                 value={alertTemp}
                 onChange={e => setAlertTemp(Number(e.target.value))}
-                className="border border-gray-300 rounded px-2 py-1 w-16 text-center text-xs font-bold focus:outline-none focus:ring-1 focus:ring-red-400 focus:border-red-400 transition-all duration-200"
+                className={`border ${isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-gray-300 bg-white text-gray-900'} rounded px-2 py-1 w-16 text-center text-xs font-bold focus:outline-none focus:ring-1 focus:ring-red-400 focus:border-red-400 transition-all duration-200`}
               />
-              <span className="text-xs font-medium text-gray-700">°C</span>
+              <span className={`text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>°C</span>
             </div>
           </div>
           {/* Gráfico de barras horizontal estilizado */}
           <div className="flex-1 flex flex-col gap-2">
             {alertMachines.length === 0 ? (
-              <div className="text-gray-500 text-center py-8 flex flex-col items-center gap-2">
+              <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-center py-8 flex flex-col items-center gap-2`}>
                 <div className="text-2xl opacity-50">📊</div>
                 <div className="text-sm">Nenhum equipamento encontrado</div>
               </div>
@@ -1114,7 +1116,7 @@ const Main = () => {
                 return (
                   <div 
                     key={eq.id} 
-                    className="group hover:bg-gray-50 p-2 rounded-lg transition-all duration-300 cursor-pointer"
+                    className={`group ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} p-2 rounded-lg transition-all duration-300 cursor-pointer`}
                     style={{ 
                       animationDelay: `${index * 50}ms`,
                       animation: 'fadeInUp 0.4s ease-out forwards'
@@ -1126,12 +1128,12 @@ const Main = () => {
                         <span className={`px-1.5 py-0.5 rounded-full text-xs ${statusColor} transition-all duration-300`}>
                           {statusIcon}
                         </span>
-                        <span className="font-medium text-gray-800 truncate text-sm group-hover:text-gray-900 transition-colors duration-200">
+                        <span className={`font-medium ${isDarkMode ? 'text-gray-300 group-hover:text-white' : 'text-gray-800 group-hover:text-gray-900'} truncate text-sm transition-colors duration-200`}>
                           {eq.name || 'Equipamento sem nome'}
                         </span>
                       </div>
                       
-                      <div className="flex-1 bg-gray-200 rounded-full h-6 relative overflow-hidden shadow-sm">
+                      <div className={`flex-1 ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded-full h-6 relative overflow-hidden shadow-sm`}>
                         <div
                           className={`h-6 rounded-full bg-gradient-to-r ${barGradient} shadow relative transition-all duration-700 ease-out`}
                           style={{ 
@@ -1146,7 +1148,7 @@ const Main = () => {
                         </div>
                         
                         <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                          <span className="text-xs font-bold text-gray-800">
+                          <span className={`text-xs font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                             {temp.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}°C
                           </span>
                         </div>
@@ -1167,12 +1169,12 @@ const Main = () => {
               })
             )}
           </div>
-          <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-200">
-            <p className="text-xs text-gray-500 flex items-center gap-1">
+          <div className={`flex items-center justify-between mt-4 pt-3 border-t ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`}>
+            <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} flex items-center gap-1`}>
               <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
               Atualizado recentemente
             </p>
-            <div className="flex items-center gap-3 text-xs text-gray-500">
+            <div className={`flex items-center gap-3 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 bg-gradient-to-r from-green-400 to-green-600 rounded-full"></div>
                 <span>Normal</span>
@@ -1193,12 +1195,12 @@ const Main = () => {
       {/* Popup Modal */}
       {popupData && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <h2 className="text-xl font-bold text-gray-800">{popupData.title}</h2>
+          <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] flex flex-col`}>
+            <div className={`flex items-center justify-between p-4 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`}>
+              <h2 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{popupData.title}</h2>
               <button 
                 onClick={() => setPopupData(null)}
-                className="text-gray-500 hover:text-gray-700 text-2xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+                className={`${isDarkMode ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'} text-2xl font-bold w-8 h-8 flex items-center justify-center rounded-full transition-colors`}
               >
                 ×
               </button>
@@ -1218,15 +1220,15 @@ const Main = () => {
                     else { statusColor = 'text-green-700 bg-green-100'; statusText = 'Normal'; }
                     
                     return (
-                      <div key={item.device} className="bg-gray-50 rounded-lg p-3 border">
+                      <div key={item.device} className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} rounded-lg p-3 border`}>
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium text-gray-800 truncate">{item.name}</span>
+                          <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} truncate`}>{item.name}</span>
                           <span className={`text-xs px-2 py-1 rounded-full ${statusColor}`}>{statusText}</span>
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="relative w-12 h-12">
                             <svg className="w-12 h-12 transform -rotate-90">
-                              <circle cx="24" cy="24" r="18" stroke="currentColor" strokeWidth="3" fill="none" className="text-gray-200"/>
+                              <circle cx="24" cy="24" r="18" stroke="currentColor" strokeWidth="3" fill="none" className={`${isDarkMode ? 'text-gray-600' : 'text-gray-200'}`}/>
                               <circle 
                                 cx="24" 
                                 cy="24" 
@@ -1239,13 +1241,13 @@ const Main = () => {
                               />
                             </svg>
                             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                              <span className="text-sm font-bold">{impactLevel.toFixed(1)}</span>
-                              <span className="text-xs text-gray-500">G</span>
+                              <span className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{impactLevel.toFixed(1)}</span>
+                              <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>G</span>
                             </div>
                           </div>
                           <div>
-                            <div className="text-sm text-gray-600">Device: {item.device}</div>
-                            <div className="text-sm text-gray-600">Rank: #{index + 1}</div>
+                            <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Device: {item.device}</div>
+                            <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Rank: #{index + 1}</div>
                           </div>
                         </div>
                       </div>
@@ -1257,15 +1259,15 @@ const Main = () => {
               {popupData.type === 'acceleration' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {popupData.data.map((item, index) => (
-                    <div key={item.device} className="bg-gray-50 rounded-lg p-4 border">
+                    <div key={item.device} className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} rounded-lg p-4 border`}>
                       <div className="flex items-center justify-between mb-3">
-                        <span className="font-medium text-gray-800 truncate">{item.name}</span>
-                        <span className="text-sm text-gray-600">#{index + 1}</span>
+                        <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} truncate`}>{item.name}</span>
+                        <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>#{index + 1}</span>
                       </div>
                       <div className="space-y-3">
                         <div className="text-center">
-                          <span className="text-lg font-bold text-gray-800">{item.total.toFixed(2)} m/s²</span>
-                          <div className="text-sm text-gray-600">Aceleração Total</div>
+                          <span className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{item.total.toFixed(2)} m/s²</span>
+                          <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Aceleração Total</div>
                         </div>
                         {[
                           { label: 'Eixo X', value: item.x, color: 'bg-red-500' },
@@ -1273,15 +1275,15 @@ const Main = () => {
                           { label: 'Eixo Z', value: item.z, color: 'bg-blue-500' }
                         ].map((axis) => (
                           <div key={axis.label} className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">{axis.label}:</span>
+                            <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{axis.label}:</span>
                             <div className="flex items-center gap-2">
-                              <div className="w-20 bg-gray-200 rounded-full h-2">
+                              <div className={`w-20 ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded-full h-2`}>
                                 <div 
                                   className={`h-2 ${axis.color} rounded-full`}
                                   style={{ width: `${Math.min(Math.abs(axis.value) / 10 * 100, 100)}%` }}
                                 />
                               </div>
-                              <span className="text-sm font-bold text-gray-800 min-w-[3rem] text-right">
+                              <span className={`text-sm font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} min-w-[3rem] text-right`}>
                                 {axis.value.toFixed(2)}
                               </span>
                             </div>
@@ -1300,14 +1302,14 @@ const Main = () => {
                     let speedStatus = item.speed > 15 ? 'Acima do Limite' : item.speed > 10 ? 'Atenção' : 'Normal';
                     
                     return (
-                      <div key={item.device} className="bg-gray-50 rounded-lg p-3 border">
+                      <div key={item.device} className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} rounded-lg p-3 border`}>
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium text-gray-800 truncate">{item.name}</span>
-                          <span className="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-700">#{index + 1}</span>
+                          <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} truncate`}>{item.name}</span>
+                          <span className={`text-xs px-2 py-1 rounded-full ${isDarkMode ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-700'}`}>#{index + 1}</span>
                         </div>
                         <div className="text-center">
                           <div className={`text-2xl font-bold ${speedColor}`}>{item.speed}</div>
-                          <div className="text-sm text-gray-600">km/h</div>
+                          <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>km/h</div>
                           <div className={`text-xs px-2 py-1 rounded-full mt-1 ${
                             item.speed > 15 ? 'text-red-700 bg-red-100' :
                             item.speed > 10 ? 'text-orange-700 bg-orange-100' :
@@ -1316,7 +1318,7 @@ const Main = () => {
                             {speedStatus}
                           </div>
                           {item.speed > 15 && (
-                            <div className="text-xs text-red-600 mt-1 font-medium">
+                            <div className={`text-xs ${isDarkMode ? 'text-red-400' : 'text-red-600'} mt-1 font-medium`}>
                               Limite: 15 km/h
                             </div>
                           )}
@@ -1338,14 +1340,14 @@ const Main = () => {
                     else { signalColor = 'text-red-700 bg-red-100'; signalText = 'Fraco'; }
                     
                     return (
-                      <div key={item.device} className="bg-gray-50 rounded-lg p-3 border">
+                      <div key={item.device} className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} rounded-lg p-3 border`}>
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium text-gray-800 truncate">{item.name}</span>
-                          <span className="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-700">#{index + 1}</span>
+                          <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} truncate`}>{item.name}</span>
+                          <span className={`text-xs px-2 py-1 rounded-full ${isDarkMode ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-700'}`}>#{index + 1}</span>
                         </div>
                         <div className="text-center">
-                          <div className="text-2xl font-bold text-gray-800">{item.satellites}</div>
-                          <div className="text-sm text-gray-600">Satélites</div>
+                          <div className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{item.satellites}</div>
+                          <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Satélites</div>
                           <div className={`text-xs px-2 py-1 rounded-full mt-1 ${signalColor}`}>
                             {signalText}
                           </div>
@@ -1365,14 +1367,14 @@ const Main = () => {
                     else statusColor = 'text-green-700 bg-green-100 border-green-200';
                     
                     return (
-                      <div key={index} className={`rounded-lg p-4 border-2 ${statusColor}`}>
+                      <div key={index} className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50'} rounded-lg p-4 border-2 ${statusColor}`}>
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium text-gray-800 truncate">{item.name}</span>
-                          <span className="text-xs px-2 py-1 rounded-full bg-white bg-opacity-50">#{index + 1}</span>
+                          <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} truncate`}>{item.name}</span>
+                          <span className={`text-xs px-2 py-1 rounded-full ${isDarkMode ? 'bg-gray-800 bg-opacity-50 text-gray-300' : 'bg-white bg-opacity-50 text-gray-700'}`}>#{index + 1}</span>
                         </div>
                         <div className="space-y-2">
-                          <div className="text-lg font-bold">{item.remaining_hours.toFixed(0)}h</div>
-                          <div className="text-sm text-gray-600">Horas Restantes</div>
+                          <div className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{item.remaining_hours.toFixed(0)}h</div>
+                          <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Horas Restantes</div>
                           <div className={`text-sm font-medium px-2 py-1 rounded-full text-center`}>
                             {item.status}
                           </div>
@@ -1386,14 +1388,14 @@ const Main = () => {
               {popupData.type === 'worked_hours' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {popupData.data.map((item, index) => (
-                    <div key={index} className="bg-gray-50 rounded-lg p-4 border">
+                    <div key={index} className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} rounded-lg p-4 border`}>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-gray-800 truncate">{item.name}</span>
-                        <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">#{index + 1}</span>
+                        <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} truncate`}>{item.name}</span>
+                        <span className={`text-xs px-2 py-1 rounded-full ${isDarkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-700'}`}>#{index + 1}</span>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">{item.worked_hours.toLocaleString('pt-BR')}</div>
-                        <div className="text-sm text-gray-600">Horas Trabalhadas</div>
+                        <div className={`text-2xl font-bold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>{item.worked_hours.toLocaleString('pt-BR')}</div>
+                        <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Horas Trabalhadas</div>
                       </div>
                     </div>
                   ))}
@@ -1419,16 +1421,16 @@ const Main = () => {
                     }
                     
                     return (
-                      <div key={index} className={`rounded-lg p-3 border-2 ${statusColor}`}>
+                      <div key={index} className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50'} rounded-lg p-3 border-2 ${statusColor}`}>
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium text-gray-800 truncate">{item.name}</span>
-                          <span className="text-xs px-2 py-1 rounded-full bg-white bg-opacity-50">#{index + 1}</span>
+                          <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} truncate`}>{item.name}</span>
+                          <span className={`text-xs px-2 py-1 rounded-full ${isDarkMode ? 'bg-gray-800 bg-opacity-50 text-gray-300' : 'bg-white bg-opacity-50 text-gray-700'}`}>#{index + 1}</span>
                         </div>
                         <div className="flex items-center justify-center mb-2">
                           <span className="text-2xl mr-2">{statusIcon}</span>
                           <div className="text-center">
-                            <div className="text-2xl font-bold text-gray-800">{item.temperature.toFixed(1)}°C</div>
-                            <div className="text-sm text-gray-600">Temperatura</div>
+                            <div className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{item.temperature.toFixed(1)}°C</div>
+                            <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Temperatura</div>
                           </div>
                         </div>
                         <div className={`text-sm font-medium px-2 py-1 rounded-full text-center`}>
@@ -1441,7 +1443,7 @@ const Main = () => {
               )}
             </div>
             
-            <div className="px-4 py-3 border-t border-gray-200 text-sm text-gray-500 text-center">
+            <div className={`px-4 py-3 border-t ${isDarkMode ? 'border-gray-600 text-gray-400' : 'border-gray-200 text-gray-500'} text-sm text-center`}>
               Total de {popupData.data.length} equipamentos encontrados
             </div>
           </div>

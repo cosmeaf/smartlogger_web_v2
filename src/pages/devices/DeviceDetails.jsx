@@ -9,8 +9,11 @@ import {
   Paper,
   Divider,
   Chip,
+  ThemeProvider,
+  createTheme,
 } from "@mui/material";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTheme } from '../../context/ThemeContext';
 // import { DeviceResponse } from "../../../interfaces/device";
 // import { deviceService } from "../../../core/http/services/deviceService";
 import apiService from '../../services/apiService';
@@ -704,6 +707,44 @@ export default function DeviceDetails() {
   const [equipment, setEquipment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { isDarkMode } = useTheme();
+
+  // Criar tema do Material-UI baseado no tema atual
+  const muiTheme = createTheme({
+    palette: {
+      mode: isDarkMode ? 'dark' : 'light',
+      primary: {
+        main: isDarkMode ? '#60a5fa' : '#1976d2', // Azul mais claro no dark mode
+      },
+      secondary: {
+        main: isDarkMode ? '#f87171' : '#dc004e', // Vermelho mais suave no dark mode
+      },
+      background: {
+        default: isDarkMode ? '#111827' : '#fafafa',
+        paper: isDarkMode ? '#1f2937' : '#ffffff',
+      },
+      text: {
+        primary: isDarkMode ? '#f3f4f6' : '#000000',
+        secondary: isDarkMode ? '#9ca3af' : '#666666',
+      },
+    },
+    components: {
+      MuiPaper: {
+        styleOverrides: {
+          root: {
+            borderColor: isDarkMode ? '#374151' : '#e0e0e0',
+          },
+        },
+      },
+      MuiDivider: {
+        styleOverrides: {
+          root: {
+            borderColor: isDarkMode ? '#374151' : '#e0e0e0',
+          },
+        },
+      },
+    },
+  });
 
   useEffect(() => {
     let foundDevice = null;
@@ -741,17 +782,21 @@ export default function DeviceDetails() {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" mt={4}>
-        <CircularProgress />
-      </Box>
+      <ThemeProvider theme={muiTheme}>
+        <Box display="flex" justifyContent="center" mt={4}>
+          <CircularProgress />
+        </Box>
+      </ThemeProvider>
     );
   }
 
   if (error || !device) {
     return (
-      <Box m={2}>
-        <Typography color="error">{error}</Typography>
-      </Box>
+      <ThemeProvider theme={muiTheme}>
+        <Box m={2}>
+          <Typography color="error">{error}</Typography>
+        </Box>
+      </ThemeProvider>
     );
   }
 
@@ -822,32 +867,33 @@ export default function DeviceDetails() {
   ] : [];
 
   return (
-    <Card sx={{ m: 2, boxShadow: 3, borderRadius: 2 }}>
-      <CardContent>
-        <Box display="flex" alignItems="center" gap={2} mb={3}>
-          <DeviceIcon />
-          <Box>
-            <Typography variant="h4" gutterBottom sx={{ mb: 0 }}>
-              Dispositivo {device.device_id}
-            </Typography>
-            {equipment && equipment.name && (
-              <Box display="flex" alignItems="center" gap={1}>
-                <Typography variant="h6" color="text.secondary">
-                  Máquina: {equipment.name}
-                </Typography>
-                {equipment.status && (
-                  <Chip
-                    icon={<StatusIcon status={equipment.status} />}
-                    label={equipment.status}
-                    size="small"
-                    variant="outlined"
-                    sx={{ ml: 1 }}
-                  />
-                )}
-              </Box>
-            )}
+    <ThemeProvider theme={muiTheme}>
+      <Card sx={{ m: 2, boxShadow: 3, borderRadius: 2 }}>
+        <CardContent>
+          <Box display="flex" alignItems="center" gap={2} mb={3}>
+            <DeviceIcon />
+            <Box>
+              <Typography variant="h4" gutterBottom sx={{ mb: 0 }}>
+                Dispositivo {device.device_id}
+              </Typography>
+              {equipment && equipment.name && (
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Typography variant="h6" color="text.secondary">
+                    Máquina: {equipment.name}
+                  </Typography>
+                  {equipment.status && (
+                    <Chip
+                      icon={<StatusIcon status={equipment.status} />}
+                      label={equipment.status}
+                      size="small"
+                      variant="outlined"
+                      sx={{ ml: 1 }}
+                    />
+                  )}
+                </Box>
+              )}
+            </Box>
           </Box>
-        </Box>
 
         <Box display="flex" flexWrap="wrap" gap={2}>
           {interestGroups.map(group => (
@@ -1046,5 +1092,6 @@ export default function DeviceDetails() {
         </Box>
       </CardContent>
     </Card>
+    </ThemeProvider>
   );
 }

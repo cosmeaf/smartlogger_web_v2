@@ -6,8 +6,11 @@ import {
   Typography,
   CircularProgress,
   Button,
+  ThemeProvider,
+  createTheme,
 } from "@mui/material";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTheme } from '../../context/ThemeContext';
 import apiService from '../../services/apiService';
 
 export default function DeviceLocation() {
@@ -15,7 +18,18 @@ export default function DeviceLocation() {
   const [device, setDevice] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { isDarkMode } = useTheme();
   const navigate = useNavigate();
+
+  // Criar tema do Material-UI baseado no tema atual
+  const muiTheme = createTheme({
+    palette: {
+      mode: isDarkMode ? 'dark' : 'light',
+      primary: {
+        main: '#1976d2',
+      },
+    },
+  });
 
   useEffect(() => {
     apiService
@@ -40,27 +54,35 @@ export default function DeviceLocation() {
 
   if (loading) {
     return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight={300}
-      >
-        <CircularProgress />
-      </Box>
+      <ThemeProvider theme={muiTheme}>
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          minHeight={300}
+        >
+          <CircularProgress />
+        </Box>
+      </ThemeProvider>
     );
   }
 
   if (error) {
     return (
-      <Typography color="error" sx={{ m: 2 }}>
-        {error}
-      </Typography>
+      <ThemeProvider theme={muiTheme}>
+        <Typography color="error" sx={{ m: 2 }}>
+          {error}
+        </Typography>
+      </ThemeProvider>
     );
   }
 
   if (!device) {
-    return <Typography sx={{ m: 2 }}>Dispositivo não encontrado.</Typography>;
+    return (
+      <ThemeProvider theme={muiTheme}>
+        <Typography sx={{ m: 2 }}>Dispositivo não encontrado.</Typography>
+      </ThemeProvider>
+    );
   }
 
   const openMap = () => {
@@ -71,8 +93,9 @@ export default function DeviceLocation() {
   };
 
   return (
-    <Card sx={{ m: 2, maxWidth: 600, borderRadius: 2, boxShadow: 3 }}>
-      <CardContent>
+    <ThemeProvider theme={muiTheme}>
+      <Card sx={{ m: 2, maxWidth: 600, borderRadius: 2, boxShadow: 3 }}>
+        <CardContent>
         <Typography variant="h5" gutterBottom>
           Localização do Dispositivo {device.device_id}
         </Typography>
@@ -119,5 +142,6 @@ export default function DeviceLocation() {
         </Box>
       </CardContent>
     </Card>
+    </ThemeProvider>
   );
 }

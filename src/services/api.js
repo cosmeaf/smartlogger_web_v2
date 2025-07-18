@@ -59,7 +59,8 @@ api.interceptors.response.use(
       if (!refresh) {
         // Sem token de refresh, deslogar
         localStorage.clear();
-        window.location.href = '/login'; // Redirecionar para a página de login
+        //window.location.href = '/login'; // Redirecionar para a página de login
+        window.location.href = '/'; // Redirecionar para a página de login
         return Promise.reject(error);
       }
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useTheme } from '../../context/ThemeContext';
 import apiService from '../../services/apiService';
 import LoadPage from '../../components/LoadPage';
 import { FaTrash, FaPlus, FaEdit } from 'react-icons/fa';
@@ -8,6 +9,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 const Maintenance = () => {
   const { equipmentId } = useParams();
+  const { isDarkMode } = useTheme();
   const [maintenanceRecords, setMaintenanceRecords] = useState([]);
   const [resetLogs, setResetLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -81,21 +83,27 @@ const Maintenance = () => {
   }
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+    <div className={`p-6 min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
       {/* Tabela de Manutenções */}
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold text-blue-900">Manutenções do Equipamento {equipmentName}</h2>
+        <h2 className={`text-2xl font-semibold ${isDarkMode ? 'text-white' : 'text-blue-900'}`}>
+          Manutenções do Equipamento {equipmentName}
+        </h2>
         <Link
           to={`/dashboard/maintenance/${equipmentId}/create`}
-          className="bg-blue-900 text-white py-2 px-4 rounded-md flex items-center"
+          className={`py-2 px-4 rounded-md flex items-center transition-colors ${
+            isDarkMode 
+              ? 'bg-blue-700 hover:bg-blue-600 text-white' 
+              : 'bg-blue-900 hover:bg-blue-800 text-white'
+          }`}
         >
           <FaPlus className="mr-2" /> Nova Manutenção
         </Link>
       </div>
 
       <div className="overflow-auto rounded-lg shadow mb-8">
-        <table className="min-w-full bg-white text-sm">
-          <thead className="bg-blue-900 text-white">
+        <table className={`min-w-full text-sm ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+          <thead className={`${isDarkMode ? 'bg-gray-700' : 'bg-blue-900'} text-white`}>
             <tr>
               <th className="text-left py-2 px-4">Nome da Peça</th>
               <th className="text-left py-2 px-4">O.S.</th>
@@ -106,9 +114,13 @@ const Maintenance = () => {
               <th className="text-right py-2 px-4">Ações</th>
             </tr>
           </thead>
-          <tbody className="text-gray-700">
+          <tbody className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
             {maintenanceRecords.map((maintenance) => (
-              <tr key={maintenance.id} className="bg-gray-100 border-b border-gray-300">
+              <tr key={maintenance.id} className={`border-b ${
+                isDarkMode 
+                  ? 'bg-gray-800 border-gray-700 hover:bg-gray-750' 
+                  : 'bg-gray-100 border-gray-300 hover:bg-gray-50'
+              } transition-colors`}>
                 <td className="py-2 px-4">{maintenance.name}</td>
                 <td className="py-2 px-4">
                   <input
@@ -119,7 +131,11 @@ const Maintenance = () => {
                   />
                 </td>
                 <td className="py-2 px-4">
-                  <button className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700">
+                  <button className={`px-2 py-1 rounded transition-colors ${
+                    isDarkMode 
+                      ? 'bg-blue-600 hover:bg-blue-500 text-white' 
+                      : 'bg-blue-500 hover:bg-blue-700 text-white'
+                  }`}>
                     Relatório
                   </button>
                 </td>
@@ -130,19 +146,31 @@ const Maintenance = () => {
                   <div className="flex justify-end space-x-2">
                     <button
                       onClick={() => handleResetHours(maintenance.id)}
-                      className="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-700"
+                      className={`px-2 py-1 rounded transition-colors ${
+                        isDarkMode 
+                          ? 'bg-yellow-600 hover:bg-yellow-500 text-white' 
+                          : 'bg-yellow-500 hover:bg-yellow-700 text-white'
+                      }`}
                     >
                       Zerar
                     </button>
                     <Link
                       to={`/dashboard/maintenance/${maintenance.id}/edit`}
-                      className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700"
+                      className={`px-2 py-1 rounded transition-colors ${
+                        isDarkMode 
+                          ? 'bg-blue-600 hover:bg-blue-500 text-white' 
+                          : 'bg-blue-500 hover:bg-blue-700 text-white'
+                      }`}
                     >
                       <FaEdit />
                     </Link>
                     <button
                       onClick={() => {}}
-                      className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-700"
+                      className={`px-2 py-1 rounded transition-colors ${
+                        isDarkMode 
+                          ? 'bg-red-600 hover:bg-red-500 text-white' 
+                          : 'bg-red-500 hover:bg-red-700 text-white'
+                      }`}
                     >
                       <FaTrash />
                     </button>
@@ -156,10 +184,12 @@ const Maintenance = () => {
 
       {/* Nova Tabela de Logs de Reset */}
       <div className="mb-8">
-        <h3 className="text-lg font-semibold text-blue-700 mb-3">Logs de Reset</h3>
+        <h3 className={`text-lg font-semibold mb-3 ${isDarkMode ? 'text-blue-400' : 'text-blue-700'}`}>
+          Logs de Reset
+        </h3>
         <div className="overflow-auto rounded-lg shadow">
-          <table className="min-w-full bg-white text-sm">
-            <thead className="bg-blue-900 text-white">
+          <table className={`min-w-full text-sm ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <thead className={`${isDarkMode ? 'bg-gray-700' : 'bg-blue-900'} text-white`}>
               <tr>
                 <th className="text-left py-2 px-4">Data Reset</th>
                 <th className="text-left py-2 px-4">Equipamento Horas</th>
@@ -167,9 +197,13 @@ const Maintenance = () => {
                 <th className="text-left py-2 px-4">Obs</th>
               </tr>
             </thead>
-            <tbody className="text-gray-700">
+            <tbody className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
               {resetLogs.map((log) => (
-                <tr key={log.id} className="bg-gray-100 border-b border-gray-300">
+                <tr key={log.id} className={`border-b ${
+                  isDarkMode 
+                    ? 'bg-gray-800 border-gray-700 hover:bg-gray-750' 
+                    : 'bg-gray-100 border-gray-300 hover:bg-gray-50'
+                } transition-colors`}>
                   <td className="py-2 px-4">
                     {new Date(log.reset_date).toLocaleString('pt-BR')}
                   </td>

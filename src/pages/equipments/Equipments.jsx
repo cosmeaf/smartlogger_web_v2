@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { FaEdit, FaTrash, FaTools, FaEye, FaPlus, FaTimes } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import { Link } from 'react-router-dom';
+import { useTheme } from '../../context/ThemeContext';
 import api from '../../services/api';
 import LoadPage from '../../components/LoadPage';
 
@@ -22,6 +23,7 @@ const Equipments = () => {
   const [maintenanceFilter, setMaintenanceFilter] = useState('all');
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [refreshInterval, setRefreshInterval] = useState(30); // segundos
+  const { isDarkMode } = useTheme();
 
   /**
    * ✅ Buscar Equipamentos
@@ -285,9 +287,9 @@ const Equipments = () => {
   }
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+    <div className="p-6 min-h-screen">
       {/* ✅ Barra de Ferramentas */}
-      <div className="mb-6 bg-white p-4 rounded-lg shadow">
+      <div className={`mb-6 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-4 rounded-lg shadow border`}>
         {/* Primeira linha: Busca e Filtros */}
         <div className="flex flex-wrap gap-4 items-center justify-between mb-4">
           <div className="flex flex-wrap gap-4 items-center">
@@ -296,11 +298,14 @@ const Equipments = () => {
               placeholder="Pesquisar por nome ou modelo..."
               value={search}
               onChange={handleSearchChange}
-              className="p-2 px-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[280px]"
+              className={`p-2 px-4 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-white placeholder-gray-400' : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[280px]`}
             />
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`p-2 px-4 rounded-md flex items-center ${showFilters ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'} hover:bg-blue-200`}
+              className={`p-2 px-4 rounded-md flex items-center ${showFilters ? 
+                (isDarkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-700') : 
+                (isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700')
+              } hover:${isDarkMode ? 'bg-blue-800' : 'bg-blue-200'}`}
             >
               🔍 Filtros Avançados
             </button>
@@ -312,7 +317,7 @@ const Equipments = () => {
                 setMaintenanceFilter('all');
                 setCurrentPage(1);
               }}
-              className="p-2 px-4 bg-gray-200 rounded-md hover:bg-gray-300"
+              className={`p-2 px-4 ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'} rounded-md`}
             >
               Limpar Filtros
             </button>
@@ -322,14 +327,14 @@ const Equipments = () => {
             {/* Botão Exportar CSV */}
             <button
               onClick={exportToCSV}
-              className="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 flex items-center whitespace-nowrap"
+              className={`${isDarkMode ? 'bg-green-700 hover:bg-green-800' : 'bg-green-600 hover:bg-green-700'} text-white py-2 px-4 rounded-md flex items-center whitespace-nowrap`}
             >
               📊 Exportar CSV
             </button>
             {/* Botão Adicionar Novo Equipamento */}
             <Link
               to="/dashboard/equipments/create"
-              className="bg-blue-900 text-white py-2 px-4 rounded-md flex items-center hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 whitespace-nowrap"
+              className={`${isDarkMode ? 'bg-blue-800 hover:bg-blue-700' : 'bg-blue-900 hover:bg-blue-800'} text-white py-2 px-4 rounded-md flex items-center focus:outline-none focus:ring-2 focus:ring-blue-500 whitespace-nowrap`}
               aria-label="Adicionar Novo Equipamento"
             >
               <FaPlus className="mr-2" /> Novo Equipamento
@@ -339,15 +344,15 @@ const Equipments = () => {
 
         {/* Filtros Avançados (Colapsável) */}
         {showFilters && (
-          <div className="p-4 bg-gray-50 rounded-lg space-y-4">
+          <div className={`p-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg space-y-4`}>
             {/* Filtros */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status Manutenção</label>
+                <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Status Manutenção</label>
                 <select
                   value={maintenanceFilter}
                   onChange={(e) => setMaintenanceFilter(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md py-2 px-3"
+                  className={`w-full border ${isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-gray-300 bg-white text-gray-900'} rounded-md py-2 px-3`}
                 >
                   <option value="all">Todos</option>
                   <option value="urgent">🔴 Urgente</option>
@@ -356,11 +361,11 @@ const Equipments = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Temperatura</label>
+                <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Temperatura</label>
                 <select
                   value={temperatureFilter}
                   onChange={(e) => setTemperatureFilter(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md py-2 px-3"
+                  className={`w-full border ${isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-gray-300 bg-white text-gray-900'} rounded-md py-2 px-3`}
                 >
                   <option value="all">Todas</option>
                   <option value="high">🔥 Alta (&gt;90°C)</option>
@@ -562,11 +567,11 @@ const Equipments = () => {
 
       {/* ✅ Controle de Itens por Página */}
       <div className="mt-4 mb-4 flex justify-end items-center gap-2">
-        <label className="text-gray-700">Itens por página:</label>
+        <label className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Itens por página:</label>
         <select
           value={itemsPerPage}
           onChange={handleItemsPerPageChange}
-          className="border border-gray-300 rounded-md py-1 px-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={`border ${isDarkMode ? 'border-gray-600 bg-gray-800 text-white' : 'border-gray-300 bg-white text-gray-900'} rounded-md py-1 px-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
         >
           {[10, 25, 50, 75, 100].map((value) => (
             <option key={value} value={value}>
@@ -617,20 +622,20 @@ const Equipments = () => {
       {/* ✅ Modal do Mapa */}
       {showMapModal && selectedEquipment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-auto">
+          <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-auto`}>
             {/* Header do Modal */}
-            <div className="flex justify-between items-center p-4 border-b">
+            <div className={`flex justify-between items-center p-4 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`}>
               <div>
-                <h2 className="text-xl font-bold text-gray-800">
+                <h2 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                   Localização: {selectedEquipment.name}
                 </h2>
-                <p className="text-gray-600">
+                <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                   Local de Trabalho: {selectedEquipment.model}
                 </p>
               </div>
               <button
                 onClick={closeMapModal}
-                className="text-gray-500 hover:text-gray-700 text-2xl"
+                className={`${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'} text-2xl`}
                 aria-label="Fechar Modal"
               >
                 <FaTimes />
@@ -643,13 +648,13 @@ const Equipments = () => {
                 <>
                   {/* Informações de GPS */}
                   <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div className="bg-gray-50 p-3 rounded-lg">
-                      <strong className="text-gray-700">Latitude:</strong>
-                      <span className="ml-2 font-mono">{selectedEquipment.deviceData.latitude}</span>
+                    <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} p-3 rounded-lg`}>
+                      <strong className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Latitude:</strong>
+                      <span className={`ml-2 font-mono ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{selectedEquipment.deviceData.latitude}</span>
                     </div>
-                    <div className="bg-gray-50 p-3 rounded-lg">
-                      <strong className="text-gray-700">Longitude:</strong>
-                      <span className="ml-2 font-mono">{selectedEquipment.deviceData.longitude}</span>
+                    <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} p-3 rounded-lg`}>
+                      <strong className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Longitude:</strong>
+                      <span className={`ml-2 font-mono ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{selectedEquipment.deviceData.longitude}</span>
                     </div>
                   </div>
 
@@ -668,13 +673,13 @@ const Equipments = () => {
                   <div className="flex flex-col sm:flex-row justify-between gap-3">
                     <button
                       onClick={closeMapModal}
-                      className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                      className={`px-4 py-2 ${isDarkMode ? 'bg-gray-600 hover:bg-gray-700' : 'bg-gray-500 hover:bg-gray-600'} text-white rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500`}
                     >
                       Fechar
                     </button>
                     <button
                       onClick={openGoogleMaps}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={`px-4 py-2 ${isDarkMode ? 'bg-blue-700 hover:bg-blue-800' : 'bg-blue-600 hover:bg-blue-700'} text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
                     >
                       Abrir no Google Maps
                     </button>
@@ -682,15 +687,15 @@ const Equipments = () => {
                 </>
               ) : (
                 <div className="text-center py-8">
-                  <div className="text-gray-500 text-lg mb-2">
+                  <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-lg mb-2`}>
                     📍 Coordenadas GPS não disponíveis
                   </div>
-                  <p className="text-gray-400 mb-4">
+                  <p className={`${isDarkMode ? 'text-gray-500' : 'text-gray-400'} mb-4`}>
                     Este equipamento não possui informações de localização.
                   </p>
                   <button
                     onClick={closeMapModal}
-                    className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                    className={`px-4 py-2 ${isDarkMode ? 'bg-gray-600 hover:bg-gray-700' : 'bg-gray-500 hover:bg-gray-600'} text-white rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500`}
                   >
                     Fechar
                   </button>
