@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import { useDevice } from '../context/DeviceContext';
 import {
   FaBars,
   FaHome,
@@ -22,10 +23,18 @@ const Sidebar = () => {
   const location = useLocation();
   const version = packageJson.version;
   const { isDarkMode } = useTheme();
+  const { isMobile, isTablet } = useDevice();
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
   };
+
+  // Auto-close sidebar on mobile when route changes
+  React.useEffect(() => {
+    if (isMobile) {
+      setIsOpen(false);
+    }
+  }, [location.pathname, isMobile]);
 
   // Links de Navegação
   const navLinks = [
@@ -43,6 +52,105 @@ const Sidebar = () => {
     // { to: '/dashboard/settings', label: 'Configurações', icon: <FaCog /> },
     { to: '/logout', label: 'Sair', icon: <FaSignOutAlt />, action: 'logout' },
   ];
+
+  // Renderiza Bottom Navigation para mobile
+  if (isMobile) {
+    return (
+      <div className="fixed bottom-0 left-0 right-0 z-50">
+        <div className={`${isDarkMode ? 'bg-gray-900/95 border-gray-700' : 'bg-white/95 border-gray-200'} backdrop-blur-lg border-t px-2 py-2`}>
+          <div className="flex justify-around items-center max-w-md mx-auto">
+            {navLinks.map((link) => {
+              const isActive = location.pathname === link.to;
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-[64px] ${
+                    isActive 
+                      ? `${isDarkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white'} shadow-lg` 
+                      : `${isDarkMode ? 'text-gray-400 hover:text-blue-400 hover:bg-gray-800' : 'text-gray-500 hover:text-blue-500 hover:bg-blue-50'}`
+                  }`}
+                >
+                  <div className={`text-xl mb-1 ${isActive ? 'scale-110' : ''} transition-transform duration-200`}>
+                    {link.icon}
+                  </div>
+                  <span className={`text-xs font-medium ${isActive ? 'text-white' : ''} text-center leading-tight`}>
+                    {link.label}
+                  </span>
+                </Link>
+              );
+            })}
+            
+            {/* Botão de Links Externos/Menu */}
+            <div className="relative">
+              <button
+                onClick={toggleSidebar}
+                className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-[64px] ${
+                  isDarkMode ? 'text-gray-400 hover:text-blue-400 hover:bg-gray-800' : 'text-gray-500 hover:text-blue-500 hover:bg-blue-50'
+                }`}
+              >
+                <div className="text-xl mb-1">
+                  <FaBars />
+                </div>
+                <span className="text-xs font-medium text-center leading-tight">Menu</span>
+              </button>
+              
+              {/* Menu expansível para mobile */}
+              {isOpen && (
+                <div className={`absolute bottom-full right-0 mb-2 ${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'} rounded-xl shadow-xl border min-w-[200px] overflow-hidden`}>
+                  {/* Links externos */}
+                  {externalLinks.map((link) => (
+                    <a
+                      key={link.to}
+                      href={link.to}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`flex items-center px-4 py-3 ${isDarkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-50 text-gray-700'} transition-colors duration-200`}
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <div className="text-lg mr-3">
+                        {link.icon}
+                      </div>
+                      <span className="text-sm font-medium">{link.label}</span>
+                    </a>
+                  ))}
+                  
+                  {/* Separador */}
+                  <div className={`border-t ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`}></div>
+                  
+                  {/* Links do sistema */}
+                  {bottomLinks.map((link) => (
+                    <Link
+                      key={link.to}
+                      to={link.to}
+                      className={`flex items-center px-4 py-3 transition-colors duration-200 ${
+                        link.action === 'logout'
+                          ? `${isDarkMode ? 'hover:bg-red-900/20 text-red-400' : 'hover:bg-red-50 text-red-600'}`
+                          : `${isDarkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-50 text-gray-700'}`
+                      }`}
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <div className="text-lg mr-3">
+                        {link.icon}
+                      </div>
+                      <span className="text-sm font-medium">{link.label}</span>
+                    </Link>
+                  ))}
+                  
+                  {/* Versão */}
+                  <div className={`px-4 py-2 border-t ${isDarkMode ? 'border-gray-600 bg-gray-800/50' : 'border-gray-200 bg-gray-50'}`}>
+                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-center`}>
+                      SMARTLOGGER v{version}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

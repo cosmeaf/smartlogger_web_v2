@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../../context/ThemeContext';
+import { useDevice } from '../../context/DeviceContext';
 import { registerService } from '../../services/authService';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -9,11 +11,15 @@ import {
   Button,
   TextField,
   Typography,
-  Link
+  Link,
+  IconButton,
+  InputAdornment
 } from '@mui/material';
-import { Email, Lock, Apartment } from '@mui/icons-material';
+import { Email, Lock, Apartment, DarkMode, LightMode } from '@mui/icons-material';
 
 const Register = () => {
+  const { isDarkMode, toggleTheme } = useTheme();
+  const { isMobile, isTablet, screenWidth } = useDevice();
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -52,9 +58,37 @@ const Register = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <Box sx={{ 
+      minHeight: '100vh', 
+      bgcolor: isDarkMode ? 'grey.900' : 'grey.100', 
+      position: 'relative', 
+      overflow: 'hidden', 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center',
+      px: isMobile ? 2 : 0
+    }}>
+      {/* Theme Toggle Button */}
+      <IconButton
+        onClick={toggleTheme}
+        sx={{
+          position: 'fixed',
+          top: isMobile ? 16 : 24,
+          right: isMobile ? 16 : 24,
+          zIndex: 1000,
+          bgcolor: isDarkMode ? 'grey.800' : 'background.paper',
+          border: 1,
+          borderColor: isDarkMode ? 'grey.700' : 'grey.300',
+          '&:hover': {
+            bgcolor: isDarkMode ? 'grey.700' : 'grey.100',
+          }
+        }}
+      >
+        {isDarkMode ? <LightMode /> : <DarkMode />}
+      </IconButton>
+
       {/* Ondas SVG animadas no rodapé */}
-      <Box sx={{ position: 'absolute', bottom: 0, left: 0, width: '200%', zIndex: 0, pointerEvents: 'none', height: 200, overflow: 'hidden' }}>
+      <Box sx={{ position: 'absolute', bottom: 0, left: 0, width: '200%', zIndex: 0, pointerEvents: 'none', height: isMobile ? 150 : 200, overflow: 'hidden' }}>
         {/* Onda de trás */}
         <Box
           component="svg"
@@ -65,8 +99,8 @@ const Register = () => {
             bottom: 0,
             left: 0,
             width: '200%',
-            height: 200,
-            fill: '#1565c0',
+            height: isMobile ? 150 : 200,
+            fill: isDarkMode ? '#1e3a8a' : '#1565c0',
             opacity: 0.4,
             zIndex: 0,
             animation: 'loginMove 12s linear infinite',
@@ -84,8 +118,8 @@ const Register = () => {
             bottom: 0,
             left: 0,
             width: '200%',
-            height: 160,
-            fill: '#1976d2',
+            height: isMobile ? 120 : 160,
+            fill: isDarkMode ? '#2563eb' : '#1976d2',
             opacity: 0.6,
             zIndex: 1,
             animation: 'loginMoveReverse 10s linear infinite reverse',
@@ -110,59 +144,131 @@ const Register = () => {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          px: { xs: 3, sm: 6, md: 8 },
-          py: { xs: 3, sm: 5 },
-          width: { xs: '100%', sm: 420, md: 480 },
-          maxWidth: 520,
-          mx: 'auto',
+          p: isMobile ? 3 : 6,
+          width: isMobile ? 360 : 480,
           borderRadius: 4,
-          zIndex: 1,
+          zIndex: 10,
           position: 'relative',
-          bgcolor: 'background.paper',
-          boxShadow: 4
+          bgcolor: isDarkMode ? 'grey.800' : 'background.paper',
+          boxShadow: 4,
+          animation: 'fadeInUp 0.6s ease-out',
+          '@keyframes fadeInUp': {
+            '0%': {
+              opacity: 0,
+              transform: 'translateY(30px)'
+            },
+            '100%': {
+              opacity: 1,
+              transform: 'translateY(0)'
+            }
+          }
         }}
       >
-        <Avatar sx={{ bgcolor: 'primary.main', mb: 2, width: 56, height: 56, color: 'background.paper' }}>
-          <Apartment fontSize="large" />
+        <Avatar sx={{ 
+          bgcolor: 'primary.main', 
+          mb: isMobile ? 1 : 2, 
+          width: isMobile ? 36 : 56, 
+          height: isMobile ? 36 : 56, 
+          color: 'background.paper',
+          mt: isMobile ? 1 : 0
+        }}>
+          <Apartment fontSize={isMobile ? "small" : "large"} />
         </Avatar>
-        <Typography variant="h5" fontWeight={700} gutterBottom>
+        <Typography variant={isMobile ? "body1" : "h5"} fontWeight={700} gutterBottom
+          sx={{ 
+            color: isDarkMode ? 'grey.100' : 'text.primary',
+            mb: isMobile ? 0.5 : 1
+          }}>
           Registro
         </Typography>
-        <Typography variant="body1" color="text.secondary" mb={3} align="center">
+        <Typography variant={isMobile ? "body2" : "body1"} mb={isMobile ? 1.5 : 3} align="center"
+          sx={{ 
+            color: isDarkMode ? 'grey.300' : 'text.secondary'
+          }}>
           Preencha os campos para criar sua conta
         </Typography>
 
         {error && (
-          <Box sx={{ bgcolor: 'error.light', border: 1, borderColor: 'error.main', color: 'error.dark', px: 2, py: 1, borderRadius: 1, mb: 2 }}>
-            {error}
+          <Box sx={{ 
+            bgcolor: isDarkMode ? 'error.dark' : 'error.light', 
+            border: 1, 
+            borderColor: 'error.main', 
+            color: isDarkMode ? 'error.light' : 'error.dark', 
+            px: isMobile ? 1 : 2, 
+            py: isMobile ? 0.3 : 1, 
+            borderRadius: 1, 
+            mb: isMobile ? 1 : 2,
+            width: '100%'
+          }}>
+            <Typography variant="body2"
+              sx={{ 
+                color: isDarkMode ? 'grey.100' : 'error.dark',
+                fontSize: isMobile ? '12px' : 'inherit'
+              }}>
+              {error}
+            </Typography>
           </Box>
         )}
 
         <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <Box sx={{ display: 'flex', gap: isMobile ? 1 : 2, flexDirection: isMobile ? 'column' : 'row' }}>
             <TextField
-              margin="normal"
+              margin={isMobile ? "dense" : "normal"}
               required
               fullWidth
               name="first_name"
               label="Nome"
               value={formData.first_name}
               onChange={handleChange}
+              size={isMobile ? "small" : "medium"}
+              InputProps={{
+                style: {
+                  fontSize: isMobile ? '16px' : '14px'
+                }
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: isDarkMode ? 'grey.700' : 'background.paper',
+                },
+                '& .MuiInputLabel-root': {
+                  color: isDarkMode ? 'grey.300' : 'text.secondary',
+                },
+                '& .MuiInputBase-input': {
+                  color: isDarkMode ? 'grey.100' : 'text.primary',
+                }
+              }}
               disabled={isLoading}
             />
             <TextField
-              margin="normal"
+              margin={isMobile ? "dense" : "normal"}
               required
               fullWidth
               name="last_name"
               label="Sobrenome"
               value={formData.last_name}
               onChange={handleChange}
+              size={isMobile ? "small" : "medium"}
+              InputProps={{
+                style: {
+                  fontSize: isMobile ? '16px' : '14px'
+                }
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: isDarkMode ? 'grey.700' : 'background.paper',
+                },
+                '& .MuiInputLabel-root': {
+                  color: isDarkMode ? 'grey.300' : 'text.secondary',
+                },
+                '& .MuiInputBase-input': {
+                  color: isDarkMode ? 'grey.100' : 'text.primary',
+                }
+              }}
               disabled={isLoading}
             />
           </Box>
           <TextField
-            margin="normal"
+            margin={isMobile ? "dense" : "normal"}
             required
             fullWidth
             name="email"
@@ -170,16 +276,36 @@ const Register = () => {
             type="email"
             value={formData.email}
             onChange={handleChange}
+            size={isMobile ? "small" : "medium"}
             InputProps={{
               startAdornment: (
-                <Email sx={{ mr: 1 }} />
+                <InputAdornment position="start">
+                  <Email sx={{ 
+                    color: isDarkMode ? 'grey.400' : 'action.active',
+                    fontSize: isMobile ? '1rem' : '1.25rem'
+                  }} />
+                </InputAdornment>
               ),
+              style: {
+                fontSize: isMobile ? '16px' : '14px'
+              }
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                bgcolor: isDarkMode ? 'grey.700' : 'background.paper',
+              },
+              '& .MuiInputLabel-root': {
+                color: isDarkMode ? 'grey.300' : 'text.secondary',
+              },
+              '& .MuiInputBase-input': {
+                color: isDarkMode ? 'grey.100' : 'text.primary',
+              }
             }}
             disabled={isLoading}
           />
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <Box sx={{ display: 'flex', gap: isMobile ? 1 : 2, flexDirection: isMobile ? 'column' : 'row' }}>
             <TextField
-              margin="normal"
+              margin={isMobile ? "dense" : "normal"}
               required
               fullWidth
               name="password"
@@ -187,15 +313,35 @@ const Register = () => {
               type="password"
               value={formData.password}
               onChange={handleChange}
+              size={isMobile ? "small" : "medium"}
               InputProps={{
                 startAdornment: (
-                  <Lock sx={{ mr: 1 }} />
+                  <InputAdornment position="start">
+                    <Lock sx={{ 
+                      color: isDarkMode ? 'grey.400' : 'action.active',
+                      fontSize: isMobile ? '1rem' : '1.25rem'
+                    }} />
+                  </InputAdornment>
                 ),
+                style: {
+                  fontSize: isMobile ? '16px' : '14px'
+                }
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: isDarkMode ? 'grey.700' : 'background.paper',
+                },
+                '& .MuiInputLabel-root': {
+                  color: isDarkMode ? 'grey.300' : 'text.secondary',
+                },
+                '& .MuiInputBase-input': {
+                  color: isDarkMode ? 'grey.100' : 'text.primary',
+                }
               }}
               disabled={isLoading}
             />
             <TextField
-              margin="normal"
+              margin={isMobile ? "dense" : "normal"}
               required
               fullWidth
               name="password2"
@@ -203,10 +349,30 @@ const Register = () => {
               type="password"
               value={formData.password2}
               onChange={handleChange}
+              size={isMobile ? "small" : "medium"}
               InputProps={{
                 startAdornment: (
-                  <Lock sx={{ mr: 1 }} />
+                  <InputAdornment position="start">
+                    <Lock sx={{ 
+                      color: isDarkMode ? 'grey.400' : 'action.active',
+                      fontSize: isMobile ? '1rem' : '1.25rem'
+                    }} />
+                  </InputAdornment>
                 ),
+                style: {
+                  fontSize: isMobile ? '16px' : '14px'
+                }
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: isDarkMode ? 'grey.700' : 'background.paper',
+                },
+                '& .MuiInputLabel-root': {
+                  color: isDarkMode ? 'grey.300' : 'text.secondary',
+                },
+                '& .MuiInputBase-input': {
+                  color: isDarkMode ? 'grey.100' : 'text.primary',
+                }
               }}
               disabled={isLoading}
             />
@@ -215,25 +381,60 @@ const Register = () => {
             type="submit"
             fullWidth
             variant="contained"
-            sx={{ py: 1.5, mb: 2 }}
+            sx={{ 
+              py: isMobile ? 1 : 1.5, 
+              mb: isMobile ? 1 : 2,
+              mt: isMobile ? 0.5 : 0,
+              fontSize: isMobile ? '14px' : '14px'
+            }}
             disabled={isLoading}
+            size={isMobile ? "medium" : "medium"}
           >
             {isLoading ? 'Carregando...' : 'Registrar'}
           </Button>
         </Box>
 
-        <Typography variant="body2" align="center" mt={2}>
+        <Typography variant="body2" align="center" mt={isMobile ? 0.5 : 2}
+          sx={{ 
+            color: isDarkMode ? 'grey.200' : 'text.primary',
+            fontSize: isMobile ? '12px' : 'inherit'
+          }}>
           Já tem uma conta?{' '}
-          <Link component="button" variant="body2" onClick={() => navigate('/')}>Faça login</Link>
+          <Link component="button" variant="body2" onClick={() => navigate('/')}
+            sx={{ 
+              color: isDarkMode ? 'primary.light' : 'primary.main',
+              fontSize: isMobile ? '12px' : 'inherit'
+            }}>
+            Faça login
+          </Link>
         </Typography>
-        <Typography variant="body2" align="center" mt={1}>
-          <Link component="button" variant="body2" onClick={() => navigate('/recovery')}>Esqueceu sua senha? Recupere-a aqui</Link>
+        <Typography variant="body2" align="center" mt={isMobile ? 0.3 : 1}
+          sx={{ 
+            color: isDarkMode ? 'grey.200' : 'text.primary',
+            fontSize: isMobile ? '12px' : 'inherit'
+          }}>
+          <Link component="button" variant="body2" onClick={() => navigate('/recovery')}
+            sx={{ 
+              color: isDarkMode ? 'primary.light' : 'primary.main',
+              fontSize: isMobile ? '12px' : 'inherit'
+            }}>
+            Esqueceu sua senha? Recupere-a aqui
+          </Link>
         </Typography>
 
-        <Box sx={{ mt: 3, textAlign: 'center' }}>
-          <Typography variant="caption" color="text.secondary">
+        <Box sx={{ 
+          mt: isMobile ? 0.5 : 3, 
+          textAlign: 'center',
+          mb: 0
+        }}>
+          <Typography variant="caption" 
+            sx={{ 
+              color: isDarkMode ? 'grey.400' : 'text.secondary',
+              fontSize: isMobile ? '10px' : '12px'
+            }}>
             Para mais informações, visite{' '}
-            <Link href="http://api.smartlogger.io" target="_blank" rel="noopener noreferrer">
+            <Link href="http://api.smartlogger.io" target="_blank" rel="noopener noreferrer"
+              sx={{ color: isDarkMode ? 'primary.light' : 'primary.main' }}>
               API Docs
             </Link>
           </Typography>

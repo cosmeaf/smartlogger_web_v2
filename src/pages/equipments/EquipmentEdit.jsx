@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaEdit, FaArrowLeft, FaSave, FaTractor, FaCog, FaIdCard, FaClock, FaSpinner } from 'react-icons/fa';
+import { FaEdit, FaArrowLeft, FaSave, FaTractor, FaCog, FaIdCard, FaClock } from 'react-icons/fa';
 import { useTheme } from '../../context/ThemeContext';
+import LoadPage from '../../components/LoadPage';
 import api from '../../services/api';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -101,14 +102,7 @@ const EquipmentEdit = () => {
   };
 
   if (loading) {
-    return (
-      <div className="p-6 min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <FaSpinner className={`animate-spin text-4xl ${isDarkMode ? 'text-blue-400' : 'text-blue-600'} mb-4 mx-auto`} />
-          <p className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Carregando equipamento...</p>
-        </div>
-      </div>
-    );
+    return <LoadPage />;
   }
 
   return (
@@ -116,17 +110,33 @@ const EquipmentEdit = () => {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
-          <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`}>
+          <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`}> 
             <FaEdit className={`text-xl ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
           </div>
-          <div>
-            <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <div className="flex-1 min-w-0">
+            <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} truncate`}>
               Editar Equipamento
             </h1>
-            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mt-1`}>
+            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mt-1 truncate`}>
               Device ID: {equipment.device} • Atualize as informações do equipamento
             </p>
           </div>
+        </div>
+        {/* Botão de voltar igual exemplo do header */}
+        <div className="flex flex-col sm:flex-row gap-3 mt-4">
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard/equipments')}
+            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200 ${
+              isDarkMode 
+                ? 'border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+            } focus:outline-none focus:ring-2 focus:ring-gray-500`}
+          >
+            <FaArrowLeft className="text-sm" />
+            <span className="hidden sm:inline">Voltar para Equipamentos</span>
+            <span className="sm:hidden">Voltar</span>
+          </button>
         </div>
       </div>
       {/* Formulário */}
@@ -271,15 +281,7 @@ const EquipmentEdit = () => {
             </div>
             
             <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => navigate('/dashboard/equipments')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200 ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'} focus:outline-none focus:ring-2 focus:ring-gray-500`}
-                disabled={saving}
-              >
-                <FaArrowLeft className="text-sm" />
-                Voltar
-              </button>
+              {/* Botão de voltar removido do rodapé, permanece apenas no header */}
               
               <button
                 type="submit"

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../../context/ThemeContext';
+import { useDevice } from '../../context/DeviceContext';
 import { recoveryService } from '../../services/authService';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -9,11 +11,15 @@ import {
   Button,
   TextField,
   Typography,
-  Link
+  Link,
+  IconButton,
+  InputAdornment
 } from '@mui/material';
-import { Email, Apartment } from '@mui/icons-material';
+import { Email, Apartment, DarkMode, LightMode } from '@mui/icons-material';
 
 const Recovery = () => {
+  const { isDarkMode, toggleTheme } = useTheme();
+  const { isMobile, isTablet, screenWidth } = useDevice();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -33,9 +39,37 @@ const Recovery = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <Box sx={{ 
+      minHeight: '100vh', 
+      bgcolor: isDarkMode ? 'grey.900' : 'grey.100', 
+      position: 'relative', 
+      overflow: 'hidden', 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center',
+      px: isMobile ? 2 : 0
+    }}>
+      {/* Theme Toggle Button */}
+      <IconButton
+        onClick={toggleTheme}
+        sx={{
+          position: 'fixed',
+          top: isMobile ? 16 : 24,
+          right: isMobile ? 16 : 24,
+          zIndex: 1000,
+          bgcolor: isDarkMode ? 'grey.800' : 'background.paper',
+          border: 1,
+          borderColor: isDarkMode ? 'grey.700' : 'grey.300',
+          '&:hover': {
+            bgcolor: isDarkMode ? 'grey.700' : 'grey.100',
+          }
+        }}
+      >
+        {isDarkMode ? <LightMode /> : <DarkMode />}
+      </IconButton>
+
       {/* Ondas SVG animadas no rodapé */}
-      <Box sx={{ position: 'absolute', bottom: 0, left: 0, width: '200%', zIndex: 0, pointerEvents: 'none', height: 200, overflow: 'hidden' }}>
+      <Box sx={{ position: 'absolute', bottom: 0, left: 0, width: '200%', zIndex: 0, pointerEvents: 'none', height: isMobile ? 150 : 200, overflow: 'hidden' }}>
         {/* Onda de trás */}
         <Box
           component="svg"
@@ -46,8 +80,8 @@ const Recovery = () => {
             bottom: 0,
             left: 0,
             width: '200%',
-            height: 200,
-            fill: '#1565c0',
+            height: isMobile ? 150 : 200,
+            fill: isDarkMode ? '#1e3a8a' : '#1565c0',
             opacity: 0.4,
             zIndex: 0,
             animation: 'loginMove 12s linear infinite',
@@ -65,8 +99,8 @@ const Recovery = () => {
             bottom: 0,
             left: 0,
             width: '200%',
-            height: 160,
-            fill: '#1976d2',
+            height: isMobile ? 120 : 160,
+            fill: isDarkMode ? '#2563eb' : '#1976d2',
             opacity: 0.6,
             zIndex: 1,
             animation: 'loginMoveReverse 10s linear infinite reverse',
@@ -91,43 +125,83 @@ const Recovery = () => {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          px: { xs: 3, sm: 6, md: 8 },
-          py: { xs: 3, sm: 5 },
-          width: { xs: '100%', sm: 420, md: 480 },
-          maxWidth: 520,
-          mx: 'auto',
+          p: isMobile ? 3 : 6,
+          width: isMobile ? 360 : 480,
           borderRadius: 4,
-          zIndex: 1,
+          zIndex: 10,
           position: 'relative',
-          bgcolor: 'background.paper',
-          boxShadow: 4
+          bgcolor: isDarkMode ? 'grey.800' : 'background.paper',
+          boxShadow: 4,
+          animation: 'fadeInUp 0.6s ease-out',
+          '@keyframes fadeInUp': {
+            '0%': {
+              opacity: 0,
+              transform: 'translateY(30px)'
+            },
+            '100%': {
+              opacity: 1,
+              transform: 'translateY(0)'
+            }
+          }
         }}
       >
-        <Avatar sx={{ bgcolor: 'primary.main', mb: 2, width: 56, height: 56, color: 'background.paper' }}>
-          <Apartment fontSize="large" />
+        <Avatar sx={{ 
+          bgcolor: 'primary.main', 
+          mb: isMobile ? 1 : 2, 
+          width: isMobile ? 36 : 56, 
+          height: isMobile ? 36 : 56, 
+          color: 'background.paper',
+          mt: isMobile ? 1 : 0
+        }}>
+          <Apartment fontSize={isMobile ? "small" : "large"} />
         </Avatar>
-        <Typography variant="h5" fontWeight={700} gutterBottom>
+        <Typography variant={isMobile ? "body1" : "h5"} fontWeight={700} gutterBottom
+          sx={{ 
+            color: isDarkMode ? 'grey.100' : 'text.primary',
+            mb: isMobile ? 0.5 : 1
+          }}>
           Recuperação de Senha
         </Typography>
-        <Typography variant="body1" color="text.secondary" mb={3} align="center">
+        <Typography variant={isMobile ? "body2" : "body1"} mb={isMobile ? 2 : 3} align="center"
+          sx={{ color: isDarkMode ? 'grey.300' : 'text.secondary' }}>
           Informe seu e-mail para receber o link de recuperação
         </Typography>
 
         <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
           <TextField
-            margin="normal"
+            margin={isMobile ? "dense" : "normal"}
             required
             fullWidth
             id="email"
             label="E-mail"
             autoComplete="email"
-            autoFocus
+            autoFocus={!isMobile}
             value={email}
             onChange={e => setEmail(e.target.value)}
+            size={isMobile ? "small" : "medium"}
             InputProps={{
               startAdornment: (
-                <Email sx={{ mr: 1 }} />
+                <InputAdornment position="start">
+                  <Email sx={{ 
+                    color: isDarkMode ? 'grey.400' : 'action.active',
+                    fontSize: isMobile ? '1rem' : '1.25rem'
+                  }} />
+                </InputAdornment>
               ),
+              style: {
+                fontSize: isMobile ? '16px' : '14px'
+              }
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                bgcolor: isDarkMode ? 'grey.700' : 'background.paper',
+              },
+              '& .MuiInputLabel-root': {
+                color: isDarkMode ? 'grey.300' : 'text.secondary',
+              },
+              '& .MuiInputBase-input': {
+                color: isDarkMode ? 'grey.100' : 'text.primary',
+              }
             }}
             disabled={isLoading}
           />
@@ -136,27 +210,54 @@ const Recovery = () => {
             type="submit"
             fullWidth
             variant="contained"
-            sx={{ py: 1.5, mb: 2 }}
+            sx={{ 
+              py: isMobile ? 1.2 : 1.5, 
+              mb: isMobile ? 1.5 : 2,
+              mt: isMobile ? 1 : 0,
+              fontSize: isMobile ? '15px' : '14px'
+            }}
             disabled={isLoading}
+            size={isMobile ? "medium" : "medium"}
           >
             {isLoading ? 'Enviando...' : 'Enviar'}
           </Button>
         </Box>
 
-        <Typography variant="body2" align="center" mt={2}>
+        <Typography variant="body2" align="center" mt={isMobile ? 1 : 2}
+          sx={{ color: isDarkMode ? 'grey.200' : 'text.primary' }}>
           Não tem uma conta?{' '}
-          <Link component="button" variant="body2" onClick={() => navigate('/register')}>
+          <Link component="button" variant="body2" onClick={() => navigate('/register')}
+            sx={{ 
+              color: isDarkMode ? 'primary.light' : 'primary.main',
+              fontSize: '13px'
+            }}>
             Registre-se
           </Link>
         </Typography>
-        <Typography variant="body2" align="center" mt={1}>
-          <Link component="button" variant="body2" onClick={() => navigate('/')}>Voltar para Login</Link>
+        <Typography variant="body2" align="center" mt={isMobile ? 0.5 : 1}
+          sx={{ color: isDarkMode ? 'grey.200' : 'text.primary' }}>
+          <Link component="button" variant="body2" onClick={() => navigate('/')}
+            sx={{ 
+              color: isDarkMode ? 'primary.light' : 'primary.main',
+              fontSize: '13px'
+            }}>
+            Voltar para Login
+          </Link>
         </Typography>
 
-        <Box sx={{ mt: 3, textAlign: 'center' }}>
-          <Typography variant="caption" color="text.secondary">
+        <Box sx={{ 
+          mt: isMobile ? 1 : 3, 
+          textAlign: 'center',
+          mb: 0
+        }}>
+          <Typography variant="caption" 
+            sx={{ 
+              color: isDarkMode ? 'grey.400' : 'text.secondary',
+              fontSize: isMobile ? '11px' : '12px'
+            }}>
             Para mais informações, visite{' '}
-            <Link href="http://api.smartlogger.io" target="_blank" rel="noopener noreferrer">
+            <Link href="http://api.smartlogger.io" target="_blank" rel="noopener noreferrer"
+              sx={{ color: isDarkMode ? 'primary.light' : 'primary.main' }}>
               API Docs
             </Link>
           </Typography>

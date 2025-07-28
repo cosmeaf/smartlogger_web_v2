@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
+import LoadPage from '../../components/LoadPage';
 import {
   Box,
   Card,
   CardContent,
   Typography,
-  CircularProgress,
+  // CircularProgress,
   Button,
   Paper,
   Divider,
@@ -12,10 +13,9 @@ import {
   ThemeProvider,
   createTheme,
 } from "@mui/material";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useTheme } from '../../context/ThemeContext';
-// import { DeviceResponse } from "../../../interfaces/device";
-// import { deviceService } from "../../../core/http/services/deviceService";
+import { useDevice } from '../../context/DeviceContext';
 import apiService from '../../services/apiService';
 import api from '../../services/api';
 
@@ -708,6 +708,7 @@ export default function DeviceDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { isDarkMode } = useTheme();
+  const { isMobile, isTablet, isDesktop } = useDevice();
 
   // Criar tema do Material-UI baseado no tema atual
   const muiTheme = createTheme({
@@ -781,20 +782,14 @@ export default function DeviceDetails() {
   }, [id]);
 
   if (loading) {
-    return (
-      <ThemeProvider theme={muiTheme}>
-        <Box display="flex" justifyContent="center" mt={4}>
-          <CircularProgress />
-        </Box>
-      </ThemeProvider>
-    );
+    return <LoadPage />;
   }
 
   if (error || !device) {
     return (
       <ThemeProvider theme={muiTheme}>
-        <Box m={2}>
-          <Typography color="error">{error}</Typography>
+        <Box m={isMobile ? 1 : 2}>
+          <Typography color="error" variant={isMobile ? "body2" : "body1"}>{error}</Typography>
         </Box>
       </ThemeProvider>
     );
@@ -868,56 +863,98 @@ export default function DeviceDetails() {
 
   return (
     <ThemeProvider theme={muiTheme}>
-      <Card sx={{ m: 2, boxShadow: 3, borderRadius: 2 }}>
-        <CardContent>
-          <Box display="flex" alignItems="center" gap={2} mb={3}>
+      {/* Header estilo Tailwind, responsivo, com botão de voltar */}
+      <div className="mb-6 md:mb-8 px-4 md:px-8 pt-4 md:pt-8">
+        <div className="flex items-center gap-3 mb-2">
+          <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`}>
+            {/* Use DeviceIcon ou FaWrench, troque se preferir */}
             <DeviceIcon />
-            <Box>
-              <Typography variant="h4" gutterBottom sx={{ mb: 0 }}>
-                Dispositivo {device.device_id}
-              </Typography>
+          </div>
+          <div className="flex-1 min-w-0">
+            <h1 className={`text-2xl md:text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} truncate`}>
+              Detalhes do Dispositivo
+            </h1>
+            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mt-1 truncate`}>
+              Device ID: {device.device_id}
               {equipment && equipment.name && (
-                <Box display="flex" alignItems="center" gap={1}>
-                  <Typography variant="h6" color="text.secondary">
-                    Máquina: {equipment.name}
-                  </Typography>
-                  {equipment.status && (
-                    <Chip
-                      icon={<StatusIcon status={equipment.status} />}
-                      label={equipment.status}
-                      size="small"
-                      variant="outlined"
-                      sx={{ ml: 1 }}
-                    />
-                  )}
-                </Box>
+                <>
+                  {' '}• {equipment.name}
+                </>
               )}
-            </Box>
-          </Box>
+            </p>
+          </div>
+        </div>
+        {/* Botão de voltar igual exemplo */}
+        <div className="flex flex-col sm:flex-row gap-3 mt-4">
+          <Link
+            to="/dashboard/equipments"
+            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200 ${
+              isDarkMode 
+                ? 'border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+            } focus:outline-none focus:ring-2 focus:ring-gray-500`}
+          >
+            {/* Ícone SVG seta para esquerda */}
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            <span className="hidden sm:inline">Voltar para Equipamentos</span>
+            <span className="sm:hidden">Voltar</span>
+          </Link>
+        </div>
+      </div>
 
-        <Box display="flex" flexWrap="wrap" gap={2}>
+      <Card sx={{ 
+        m: isMobile ? 1 : 2, 
+        boxShadow: isMobile ? 1 : 3, 
+        borderRadius: isMobile ? 1 : 2 
+      }}>
+        <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+        <Box 
+          display="flex" 
+          flexWrap="wrap" 
+          gap={isMobile ? 1 : 2}
+          sx={{
+            '& > *': {
+              flex: isMobile ? '1 1 100%' : '1 1 320px',
+              minWidth: isMobile ? 'auto' : 260
+            }
+          }}
+        >
           {interestGroups.map(group => (
             <Paper 
               key={group.title} 
               variant="outlined" 
               sx={{ 
-                p: 2, 
-                minWidth: 260, 
-                flex: '1 1 320px', 
-                boxShadow: 1,
-                borderTop: `4px solid ${group.color}`,
+                p: isMobile ? 1.5 : 2, 
+                boxShadow: isMobile ? 0.5 : 1,
+                borderTop: `${isMobile ? '3px' : '4px'} solid ${group.color}`,
                 '&:hover': {
-                  boxShadow: 2,
-                  transform: 'translateY(-2px)',
+                  boxShadow: isMobile ? 1 : 2,
+                  transform: isMobile ? 'none' : 'translateY(-2px)',
                   transition: 'all 0.2s ease-in-out'
                 }
               }}
             >
-              <Box display="flex" alignItems="center" gap={1} mb={1}>
-                {group.icon}
-                <Typography variant="h6" sx={{ color: group.color }}>{group.title}</Typography>
+              <Box display="flex" alignItems="center" gap={1} mb={isMobile ? 0.5 : 1}>
+                <Box sx={{ 
+                  transform: isMobile ? 'scale(0.8)' : 'scale(1)',
+                  transformOrigin: 'left center'
+                }}>
+                  {group.icon}
+                </Box>
+                <Typography 
+                  variant={isMobile ? "subtitle1" : "h6"} 
+                  sx={{ 
+                    color: group.color,
+                    fontSize: isMobile ? '1rem' : '1.25rem',
+                    fontWeight: isMobile ? 600 : 500
+                  }}
+                >
+                  {group.title}
+                </Typography>
               </Box>
-              <Divider sx={{ mb: 1 }} />
+              <Divider sx={{ mb: isMobile ? 0.5 : 1 }} />
               {/* Primeiro renderiza campos com ícones */}
               {group.fields.map(field => {
                 // Se for campo do equipamento, pega do equipment, senão do device
@@ -1072,24 +1109,7 @@ export default function DeviceDetails() {
           )}
         </Box>
 
-        <Box display="flex" justifyContent="flex-end" mt={3}>
-          <Button 
-            variant="contained" 
-            onClick={() => navigate(-1)}
-            sx={{
-              borderRadius: 2,
-              textTransform: 'none',
-              px: 3,
-              py: 1,
-              '&:hover': {
-                transform: 'translateY(-1px)',
-                boxShadow: 3
-              }
-            }}
-          >
-            ← Voltar
-          </Button>
-        </Box>
+        {/* Botão de voltar removido daqui, permanece apenas no header */}
       </CardContent>
     </Card>
     </ThemeProvider>

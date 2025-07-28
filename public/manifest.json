@@ -1,0 +1,70 @@
+{
+  "name": "SmartLogger Web",
+  "short_name": "SmartLogger",
+  "description": "Sistema de monitoramento inteligente para equipamentos industriais",
+  "theme_color": "#2563eb",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "display_override": ["standalone"],
+  "orientation": "any",
+  "scope": "/",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/icon-192x192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon-512x512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": ["productivity", "business", "utilities"],
+  "launch_handler": {
+    "client_mode": "navigate-new"
+  },
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "screenshots": [
+    {
+      "src": "/screenshot1.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dashboard principal do SmartLogger"
+    },
+    {
+      "src": "/screenshot2.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Dashboard mobile do SmartLogger"
+    }
+  ],
+  "features": [
+    "cross-origin-isolated"
+  ],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Acessar dashboard principal",
+      "url": "/dashboard",
+      "icons": [{ "src": "/icon-192x192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Equipamentos",
+      "short_name": "Equipamentos",
+      "description": "Gerenciar equipamentos",
+      "url": "/equipments",
+      "icons": [{ "src": "/icon-192x192.svg", "sizes": "192x192" }]
+    }
+  ]
+}

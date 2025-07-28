@@ -4,6 +4,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { DeviceProvider } from './context/DeviceContext';
 
 // Auth Pages
 import Login from './pages/auth/Login';
@@ -30,18 +31,33 @@ import MaintenanceCreate from './pages/maintenance/MaintenanceCreate';
 import MaintenanceEdit from './pages/maintenance/MaintenanceEdit';
 
 import ProtectedRoute from './components/ProtectedRoute';
+import PublicRoute from './components/PublicRoute';
+import LogoutHandler from './components/LogoutHandler';
 
 function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <ToastContainer />
-        <Router>
+    <DeviceProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <ToastContainer />
+          <Router>
           <Routes>
           {/* ========== ROTAS PÚBLICAS (AUTENTICAÇÃO) ========== */}
-          <Route path="/" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/recovery" element={<Recovery />} />
+          <Route path="/" element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          } />
+          <Route path="/register" element={
+            <PublicRoute>
+              <Register />
+            </PublicRoute>
+          } />
+          <Route path="/recovery" element={
+            <PublicRoute>
+              <Recovery />
+            </PublicRoute>
+          } />
 
           {/* ========== ROTAS PROTEGIDAS (DASHBOARD) ========== */}
           <Route
@@ -74,6 +90,7 @@ function App() {
       </Router>
     </AuthProvider>
   </ThemeProvider>
+</DeviceProvider>
   );
 }
 
