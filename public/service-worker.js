@@ -5,8 +5,8 @@ const urlsToCache = [
   '/static/js/bundle.js',
   '/static/css/main.css',
   '/manifest.json',
-  '/icon-192x192.svg',
-  '/icon-512x512.svg'
+  '/icon-192x192.png',
+  '/icon-512x512.png'
 ];
 
 // Install event
@@ -93,8 +93,8 @@ function doBackgroundSync() {
 self.addEventListener('push', (event) => {
   const options = {
     body: event.data.text(),
-    icon: '/icon-192x192.svg',
-    badge: '/icon-192x192.svg',
+    icon: '/icon-192x192.png',
+    badge: '/icon-192x192.png',
     vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),
@@ -104,12 +104,12 @@ self.addEventListener('push', (event) => {
       {
         action: 'explore',
         title: 'Ver detalhes',
-        icon: '/icon-192x192.svg'
+        icon: '/icon-192x192.png'
       },
       {
         action: 'close',
         title: 'Fechar',
-        icon: '/icon-192x192.svg'
+        icon: '/icon-192x192.png'
       }
     ]
   };

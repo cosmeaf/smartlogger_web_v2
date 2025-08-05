@@ -603,14 +603,14 @@ const Equipments = () => {
   return (
     <div className={`${isMobile ? 'p-2' : 'p-6'} min-h-screen overflow-x-hidden`}>
       {/* ✅ Barra de Ferramentas */}
-      <div className={`mb-${isMobile ? '4' : '6'} ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} ${isMobile ? 'p-2' : 'p-4'} rounded-lg shadow border`}>
+      <div className={`mb-${isMobile ? '4' : '6'} ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} ${isMobile ? 'p-2' : 'p-4'} rounded-lg shadow border`} style={!isMobile ? {maxWidth: 'fit-content', marginLeft: 'auto'} : {}}>
         {/* Linha principal: Busca e Ações */}
-        <div className={`flex ${isMobile ? 'flex-col gap-3' : 'flex-wrap gap-4'} items-center justify-between`}>
+        <div className={`flex ${isMobile ? 'flex-col gap-3' : 'flex-wrap gap-4'} items-center justify-center`}>
           <div className={`flex ${isMobile ? 'w-full gap-2' : 'gap-4'} items-center`}>
             {/* Campo de busca pode ser adicionado aqui se necessário */}
           </div>
 
-          <div className={`flex ${isMobile ? 'w-full' : ''} gap-2 items-center`}>
+          <div className={`flex gap-2 items-center ${isMobile ? 'w-full' : 'w-auto'} self-end`} style={!isMobile ? {maxWidth: 'fit-content'} : {}}>
             {/* Botão Limpar Filtros */}
             <button
               onClick={() => {

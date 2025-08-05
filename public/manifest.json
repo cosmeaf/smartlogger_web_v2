@@ -1,8 +1,8 @@
 {
-  "name": "SmartLogger Web",
+  "name": "SmartLogger",
   "short_name": "SmartLogger",
   "description": "Sistema de monitoramento inteligente para equipamentos industriais",
-  "theme_color": "#2563eb",
+  "theme_color": "#121f3affff",
   "background_color": "#ffffff",
   "display": "standalone",
   "display_override": ["standalone"],
@@ -11,16 +11,26 @@
   "start_url": "/",
   "icons": [
     {
-      "src": "/icon-192x192.svg",
+      "src": "/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
-      "purpose": "maskable any"
+      "type": "image/png"
     },
     {
-      "src": "/icon-512x512.svg",
+      "src": "/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "maskable any"
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "categories": ["productivity", "business", "utilities"],
@@ -57,14 +67,14 @@
       "short_name": "Dashboard",
       "description": "Acessar dashboard principal",
       "url": "/dashboard",
-      "icons": [{ "src": "/icon-192x192.svg", "sizes": "192x192" }]
+      "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
     },
     {
       "name": "Equipamentos",
       "short_name": "Equipamentos",
       "description": "Gerenciar equipamentos",
       "url": "/equipments",
-      "icons": [{ "src": "/icon-192x192.svg", "sizes": "192x192" }]
+      "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
     }
   ]
 }

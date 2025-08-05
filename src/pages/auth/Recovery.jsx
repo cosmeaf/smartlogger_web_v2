@@ -145,21 +145,48 @@ const Recovery = () => {
           }
         }}
       >
-        <Avatar sx={{ 
-          bgcolor: 'primary.main', 
-          mb: isMobile ? 1 : 2, 
-          width: isMobile ? 36 : 56, 
-          height: isMobile ? 36 : 56, 
-          color: 'background.paper',
-          mt: isMobile ? 1 : 0
-        }}>
-          <Apartment fontSize={isMobile ? "small" : "large"} />
-        </Avatar>
-        <Typography variant={isMobile ? "body1" : "h5"} fontWeight={700} gutterBottom
-          sx={{ 
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: '100%',
+            mb: isMobile ? 2 : 3,
+            mt: isMobile ? 1 : 0
+          }}
+        >
+          <Box
+            sx={{
+              background: isDarkMode ? 'rgba(255,255,255,0.85)' : 'transparent',
+              borderRadius: 2,
+              px: isMobile ? 1.5 : 2.5,
+              py: isMobile ? 0.5 : 1,
+              display: 'inline-block',
+              transition: 'background 0.3s'
+            }}
+          >
+            <img
+              src="/logo.png"
+              alt="Logo SmartLogger"
+              style={{
+                width: isMobile ? '160px' : '180px',
+                height: 'auto',
+                display: 'block',
+                objectFit: 'contain'
+              }}
+            />
+          </Box>
+        </Box>
+        <Typography
+          variant={isMobile ? "h5" : "h5"}
+          fontWeight={700}
+          gutterBottom
+          sx={{
             color: isDarkMode ? 'grey.100' : 'text.primary',
-            mb: isMobile ? 0.5 : 1
-          }}>
+            mb: isMobile ? 0.5 : 1,
+            fontSize: isMobile ? '1.4rem' : undefined
+          }}
+        >
           Recuperação de Senha
         </Typography>
         <Typography variant={isMobile ? "body2" : "body1"} mb={isMobile ? 2 : 3} align="center"

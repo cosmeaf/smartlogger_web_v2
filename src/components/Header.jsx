@@ -3,6 +3,7 @@ import { AuthContext } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useDevice } from '../context/DeviceContext';
 import { FaUser, FaSignOutAlt, FaMoon, FaSun } from 'react-icons/fa';
+import NotificationBell from './NotificationBell';
 import Swal from 'sweetalert2';
 
 const Header = () => {
@@ -166,23 +167,23 @@ const Header = () => {
 
   return (
     <header className={`bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 shadow-lg border-b border-gray-200 dark:border-gray-700 transition-colors duration-300 ${
-      isMobile ? 'p-3' : 'p-4'
+      isMobile ? 'py-2.5 px-3.5' : 'py-3 px-7'
     }`}>
-      <div className={`flex ${isMobile ? 'flex-col space-y-2' : 'justify-between items-center'}`}>
+      <div className={`flex ${isMobile ? 'flex-col space-y-1' : 'justify-between items-center'}`}>
         {/* Seção de boas-vindas */}
         <div className={`flex items-center ${isMobile ? 'justify-between' : 'space-x-6'}`}>
           <div className="flex flex-col min-w-0 flex-1">
             <h1 className={`text-blue-900 dark:text-blue-400 font-bold tracking-wide transition-colors duration-300 truncate ${
-              isMobile ? 'text-base' : 'text-lg'
+              isMobile ? 'text-sm' : 'text-base'
             }`}>
               GESTÃO INTELIGENTE DE FROTAS
             </h1>
-            <div className="flex items-center space-x-2 mt-1">
+            <div className="flex items-center space-x-1 mt-0.5">
               <FaUser className={`text-blue-600 dark:text-blue-400 transition-colors duration-300 ${
                 isMobile ? 'text-xs' : 'text-sm'
               }`} />
               <span className={`text-gray-700 dark:text-gray-300 transition-colors duration-300 truncate ${
-                isMobile ? 'text-xs' : 'text-sm'
+                isMobile ? 'text-xs' : 'text-xs'
               }`}>
                 Bem-vindo, <strong className="text-blue-900 dark:text-blue-400">
                   {user?.first_name || user?.last_name ? 
@@ -193,7 +194,7 @@ const Header = () => {
               </span>
             </div>
             {!isMobile && (
-              <span className="text-gray-500 dark:text-gray-400 text-xs mt-1 ml-5 transition-colors duration-300">
+              <span className="text-gray-500 dark:text-gray-400 text-xs mt-0.5 ml-3 transition-colors duration-300">
                 {new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
               </span>
             )}
@@ -202,6 +203,9 @@ const Header = () => {
           {/* Seção de ações - mobile na mesma linha */}
           {isMobile && (
             <div className="flex items-center space-x-2 flex-shrink-0">
+              {/* Notificações */}
+              <NotificationBell />
+
               {/* Botão de tema */}
               <button
                 onClick={toggleTheme}
@@ -226,6 +230,9 @@ const Header = () => {
         {/* Seção de ações - desktop */}
         {!isMobile && (
           <div className="flex items-center space-x-3">
+            {/* Notificações */}
+            <NotificationBell />
+
             {/* Botão de tema */}
             <button
               onClick={toggleTheme}

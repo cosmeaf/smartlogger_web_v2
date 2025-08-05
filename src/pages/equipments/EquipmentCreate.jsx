@@ -4,6 +4,7 @@ import { FaPlus, FaArrowLeft, FaSave, FaTractor, FaCog, FaIdCard, FaClock, FaSpi
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../services/api';
 import { toast } from 'react-toastify';
+import LoadPage from '../../components/LoadPage';
 import 'react-toastify/dist/ReactToastify.css';
 
 const EquipmentCreate = () => {
@@ -107,14 +108,7 @@ const EquipmentCreate = () => {
   };
 
   if (loading) {
-    return (
-      <div className="p-6 min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <FaSpinner className={`animate-spin text-4xl ${isDarkMode ? 'text-blue-400' : 'text-blue-600'} mb-4 mx-auto`} />
-          <p className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Carregando dispositivos...</p>
-        </div>
-      </div>
-    );
+    return <LoadPage />;
   }
 
   if (!loading && devices.length === 0) {

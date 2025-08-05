@@ -5,6 +5,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { DeviceProvider } from './context/DeviceContext';
+import { NotificationProvider } from './context/NotificationContext';
 
 // Auth Pages
 import Login from './pages/auth/Login';
@@ -39,8 +40,9 @@ function App() {
     <DeviceProvider>
       <ThemeProvider>
         <AuthProvider>
-          <ToastContainer />
-          <Router>
+          <NotificationProvider>
+            <ToastContainer />
+            <Router>
           <Routes>
           {/* ========== ROTAS PÚBLICAS (AUTENTICAÇÃO) ========== */}
           <Route path="/" element={
@@ -88,8 +90,9 @@ function App() {
           </Route>
         </Routes>
       </Router>
-    </AuthProvider>
-  </ThemeProvider>
+    </NotificationProvider>
+  </AuthProvider>
+</ThemeProvider>
 </DeviceProvider>
   );
 }

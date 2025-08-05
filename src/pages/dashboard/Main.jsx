@@ -93,7 +93,7 @@ const Main = () => {
       // Dados para os cards
       const cardsData = [
         {
-          title: 'Dispositivos',
+          title: 'Dispositivos Encontrados ',
           value: devices.data.length,
           footer: {
             color: 'text-green-500',
@@ -103,7 +103,7 @@ const Main = () => {
           icon: <FaTractor className={`h-8 w-8 ${isDarkMode ? 'text-blue-400' : 'text-blue-900'}`} />,
         },
         {
-          title: 'Equipamentos',
+          title: 'Equipamentos Cadastrados',
           value: equipments.data.length,
           footer: {
             color: 'text-blue-500',
@@ -113,7 +113,7 @@ const Main = () => {
           icon: <FaTools className={`h-8 w-8 ${isDarkMode ? 'text-blue-400' : 'text-blue-900'}`} />,
         },
         {
-          title: 'Manutenções',
+          title: 'Manutenções Cadastradas',
           value: maintenances.data.length,
           footer: {
             color: 'text-red-500',
