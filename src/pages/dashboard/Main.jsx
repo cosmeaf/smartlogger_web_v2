@@ -71,6 +71,76 @@ const Main = () => {
   const { isDarkMode } = useTheme();
   const { isMobile, isTablet, isDesktop, getGridCols, getResponsiveClasses } = useDevice();
 
+  // Função para obter a data de atualização mais recente dos devices
+  const getLastUpdateTime = () => {
+    if (!devices || devices.data?.length === 0) return 'Sem dados';
+    
+    try {
+      // Encontra o dispositivo com updated_at mais próximo da hora atual (mais recente)
+      const now = new Date();
+      let mostRecentDevice = devices.data[0];
+      let smallestTimeDiff = Math.abs(now - new Date(devices.data[0].updated_at));
+      
+      devices.data.forEach(device => {
+        const deviceUpdate = new Date(device.updated_at);
+        const timeDiff = Math.abs(now - deviceUpdate);
+        if (timeDiff < smallestTimeDiff) {
+          smallestTimeDiff = timeDiff;
+          mostRecentDevice = device;
+        }
+      });
+      
+      // Mostra sempre a data e hora específica do dispositivo mais atual
+      const mostRecentUpdate = new Date(mostRecentDevice.updated_at);
+      
+      // Sempre mostra data e hora completas no formato brasileiro
+      return mostRecentUpdate.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      console.error('Erro ao calcular última atualização:', error);
+      return 'Atualizado recentemente';
+    }
+  };
+
+  // Função para determinar o status da comunicação baseado na data de atualização
+  const getCommunicationStatus = () => {
+    if (!devices || devices.data?.length === 0) return { color: 'bg-gray-400', isRecent: false };
+    
+    try {
+      // Encontra o dispositivo com updated_at mais próximo da hora atual (mais recente)
+      const currentTime = new Date();
+      let mostRecentDevice = devices.data[0];
+      let smallestTimeDiff = Math.abs(currentTime - new Date(devices.data[0].updated_at));
+      
+      devices.data.forEach(device => {
+        const deviceUpdate = new Date(device.updated_at);
+        const timeDiff = Math.abs(currentTime - deviceUpdate);
+        if (timeDiff < smallestTimeDiff) {
+          smallestTimeDiff = timeDiff;
+          mostRecentDevice = device;
+        }
+      });
+      
+      const lastUpdate = new Date(mostRecentDevice.updated_at);
+      const timeDifference = currentTime - lastUpdate;
+      const oneDay = 24 * 60 * 60 * 1000; // 24 horas em milissegundos
+      
+      if (timeDifference <= oneDay) {
+        return { color: 'bg-green-400', isRecent: true };
+      } else {
+        return { color: 'bg-red-400', isRecent: false };
+      }
+    } catch (error) {
+      console.error('Erro ao calcular status de comunicação:', error);
+      return { color: 'bg-gray-400', isRecent: false };
+    }
+  };
+
   const fetchStatisticsData = async () => {
     try {
       const [devices, equipments, maintenances, employees] = await Promise.all([
@@ -1815,7 +1885,10 @@ const Main = () => {
             >
               <h3 className={`${isMobile ? 'text-sm' : 'text-lg'} font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'} truncate`}>{chart.title}</h3>
               <div className="flex-1 overflow-hidden" style={{ height: isMobile ? '180px' : 'auto' }}>{createChart(chart)}</div>
-              <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} mt-2 text-center`}>Atualizado recentemente</p>
+              <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mt-2 flex items-center gap-1`}>
+                <span className={`w-1.5 h-1.5 ${getCommunicationStatus().color} rounded-full ${getCommunicationStatus().isRecent ? 'animate-pulse' : ''}`}></span>
+                {getLastUpdateTime()}
+              </p>
             </div>
           );
         })}
@@ -1930,7 +2003,7 @@ const Main = () => {
           <div className={`flex items-center justify-between mt-4 pt-3 border-t ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`}>
             <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} flex items-center gap-1`}>
               <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
-              Atualizado recentemente
+              {getLastUpdateTime()}
             </p>
             <div className={`flex items-center gap-3 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
               <div className="flex items-center gap-1">
@@ -2195,53 +2268,155 @@ const Main = () => {
                 </div>
               )}
               {popupData.type === 'gps_connection' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {popupData.data.map((item, index) => {
-                    let gpsQuality = '';
-                    let gpsColor = '';
-                    if (item.satellites >= 8) { gpsQuality = 'Excelente'; gpsColor = 'text-green-700 bg-green-100'; }
-                    else if (item.satellites >= 6) { gpsQuality = 'Bom'; gpsColor = 'text-blue-700 bg-blue-100'; }
-                    else if (item.satellites >= 4) { gpsQuality = 'Regular'; gpsColor = 'text-orange-700 bg-orange-100'; }
-                    else { gpsQuality = 'Fraco'; gpsColor = 'text-red-700 bg-red-100'; }
-
-                    let connectionQuality = '';
-                    let connectionColor = '';
-                    if (item.connectionRat >= 4) { connectionQuality = 'Excelente'; connectionColor = 'text-green-700'; }
-                    else if (item.connectionRat >= 3) { connectionQuality = 'Bom'; connectionColor = 'text-blue-700'; }
-                    else if (item.connectionRat >= 2) { connectionQuality = 'Regular'; connectionColor = 'text-orange-700'; }
-                    else { connectionQuality = 'Fraco'; connectionColor = 'text-red-700'; }
-
-                    return (
-                      <div key={item.device} className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} rounded-lg p-4 border`}>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} truncate`}>{item.name}</span>
-                          <span className={`text-xs px-2 py-1 rounded-full ${isDarkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-700'}`}>#{index + 1}</span>
+                <div>
+                  {/* Lista de Equipamentos */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+                    {popupData.data.map((item, index) => {
+                      // Qualidade GPS baseada em satélites
+                      let gpsQuality = '';
+                      let gpsColor = '';
+                      let gpsIcon = '';
+                      
+                      if (item.satellites >= 8) { 
+                        gpsQuality = 'Excelente'; 
+                        gpsColor = 'text-emerald-600 bg-emerald-100'; 
+                        gpsIcon = '🛰️'; 
+                      }
+                      else if (item.satellites >= 6) { 
+                        gpsQuality = 'Bom'; 
+                        gpsColor = 'text-blue-600 bg-blue-100'; 
+                        gpsIcon = '📡'; 
+                      }
+                      else if (item.satellites >= 4) { 
+                        gpsQuality = 'Regular'; 
+                        gpsColor = 'text-amber-600 bg-amber-100'; 
+                        gpsIcon = '📶'; 
+                      }
+                      else { 
+                        gpsQuality = 'Fraco'; 
+                        gpsColor = 'text-red-600 bg-red-100'; 
+                        gpsIcon = '📵'; 
+                      }
+                      
+                      // Qualidade da conexão RAT
+                      let connectionQuality = '';
+                      let connectionColor = '';
+                      
+                      if (item.connectionRat >= 4) { 
+                        connectionQuality = 'Excelente'; 
+                        connectionColor = 'text-emerald-600'; 
+                      }
+                      else if (item.connectionRat >= 3) { 
+                        connectionQuality = 'Bom'; 
+                        connectionColor = 'text-blue-600'; 
+                      }
+                      else if (item.connectionRat >= 2) { 
+                        connectionQuality = 'Regular'; 
+                        connectionColor = 'text-amber-600'; 
+                      }
+                      else { 
+                        connectionQuality = 'Fraco'; 
+                        connectionColor = 'text-red-600'; 
+                      }
+                      
+                      // Status geral
+                      const overallGood = (item.satellites >= 6 && item.connectionRat >= 3);
+                      const overallOk = (item.satellites >= 4 && item.connectionRat >= 2);
+                      
+                      return (
+                        <div 
+                          key={item.device} 
+                          className={`${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'} 
+                            rounded-lg p-3 border hover:shadow-md transition-all duration-300 cursor-pointer`}
+                          style={{ 
+                            animationDelay: `${index * 50}ms`,
+                            animation: 'fadeInUp 0.6s ease-out forwards'
+                          }}
+                        >
+                          {/* Header com nome e ranking */}
+                          <div className="flex items-center justify-between mb-2">
+                            <span className={`font-medium text-sm ${isDarkMode ? 'text-white' : 'text-gray-800'} truncate`}>
+                              {item.name}
+                            </span>
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold`}>
+                              #{index + 1}
+                            </span>
+                          </div>
+                          
+                          {/* GPS Section */}
+                          <div className="mb-2">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className={`text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>GPS:</span>
+                              <span className={`text-xs px-1.5 py-0.5 rounded-full ${gpsColor} font-medium`}>
+                                {gpsQuality}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="flex gap-0.5">
+                                {[1, 2, 3, 4, 5].map(bar => (
+                                  <div 
+                                    key={bar}
+                                    className={`w-1 h-3 rounded-sm ${
+                                      bar <= Math.ceil(item.satellites / 2.4) 
+                                        ? item.satellites >= 8 ? 'bg-emerald-500' 
+                                          : item.satellites >= 6 ? 'bg-blue-500'
+                                          : item.satellites >= 4 ? 'bg-amber-500' 
+                                          : 'bg-red-500'
+                                        : isDarkMode ? 'bg-gray-600' : 'bg-gray-200'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                              <span className={`text-xs font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                                {item.satellites}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Connection Section */}
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className={`text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Conexão:</span>
+                              <span className={`text-xs font-bold ${connectionColor}`}>
+                                {connectionQuality}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className={`flex-1 ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded-full h-1.5`}>
+                                <div 
+                                  className={`h-1.5 rounded-full ${
+                                    item.connectionRat >= 4 ? 'bg-emerald-500' :
+                                    item.connectionRat >= 3 ? 'bg-blue-500' :
+                                    item.connectionRat >= 2 ? 'bg-amber-500' :
+                                    'bg-red-500'
+                                  }`}
+                                  style={{ width: `${Math.min(item.connectionRat / 5 * 100, 100)}%` }}
+                                />
+                              </div>
+                              <span className={`text-xs font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                                {item.connectionRat.toFixed(1)}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Status geral */}
+                          <div className={`mt-2 pt-2 border-t ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`}>
+                            <div className={`flex items-center justify-center text-xs`}>
+                              <span className={`font-bold flex items-center gap-1 ${
+                                overallGood ? 'text-emerald-600' :
+                                overallOk ? 'text-amber-600' :
+                                'text-red-600'
+                              }`}>
+                                {overallGood ? '🟢 Ótimo' :
+                                 overallOk ? '🟡 Regular' :
+                                 '🔴 Ruim'}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="mb-2 flex items-center gap-2">
-                          <span className={`text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>GPS:</span>
-                          <span className={`text-xs px-2 py-1 rounded-full ${gpsColor}`}>{gpsQuality}</span>
-                          <span className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{item.satellites} sat</span>
-                        </div>
-                        <div className="mb-2 flex items-center gap-2">
-                          <span className={`text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Conexão:</span>
-                          <span className={`text-xs px-2 py-1 rounded-full ${connectionColor}`}>{connectionQuality}</span>
-                          <span className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{item.connectionRat.toFixed(1)}</span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className={`text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Status Geral:</span>
-                          <span className={`font-bold ${
-                            (item.satellites >= 6 && item.connectionRat >= 3) ? 'text-green-500' :
-                            (item.satellites >= 4 && item.connectionRat >= 2) ? 'text-orange-500' :
-                            'text-red-500'
-                          }`}>
-                            {(item.satellites >= 6 && item.connectionRat >= 3) ? '🟢 Ótimo' :
-                              (item.satellites >= 4 && item.connectionRat >= 2) ? '🟡 Regular' :
-                              '🔴 Ruim'}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               )}
               {popupData.type === 'temperature' && (

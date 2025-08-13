@@ -286,11 +286,16 @@ const Login = () => {
             size={isMobile ? "small" : "medium"}
             InputProps={{
               startAdornment: (
-                <InputAdornment position="start">
-                  <Email sx={{ 
+                <InputAdornment position="start" sx={{
+                  // Corrige o fundo dos ícones no autocomplete
+                  '& .MuiSvgIcon-root': {
                     color: isDarkMode ? 'grey.400' : 'action.active',
-                    fontSize: isMobile ? '1rem' : '1.25rem'
-                  }} />
+                    fontSize: isMobile ? '1rem' : '1.25rem',
+                    zIndex: 1,
+                    position: 'relative'
+                  }
+                }}>
+                  <Email />
                 </InputAdornment>
               ),
               style: {
@@ -306,6 +311,24 @@ const Login = () => {
               },
               '& .MuiInputBase-input': {
                 color: isDarkMode ? 'grey.100' : 'text.primary',
+                // Corrige o fundo claro do autocomplete do Chrome no tema escuro
+                '&:-webkit-autofill': {
+                  WebkitBoxShadow: isDarkMode ? '0 0 0 1000px #424242 inset' : '0 0 0 1000px #fff inset',
+                  WebkitTextFillColor: isDarkMode ? '#f5f5f5 !important' : '#000 !important',
+                  transition: 'background-color 5000s ease-in-out 0s',
+                },
+                '&:-webkit-autofill:hover': {
+                  WebkitBoxShadow: isDarkMode ? '0 0 0 1000px #424242 inset' : '0 0 0 1000px #fff inset',
+                  WebkitTextFillColor: isDarkMode ? '#f5f5f5 !important' : '#000 !important',
+                },
+                '&:-webkit-autofill:focus': {
+                  WebkitBoxShadow: isDarkMode ? '0 0 0 1000px #424242 inset' : '0 0 0 1000px #fff inset',
+                  WebkitTextFillColor: isDarkMode ? '#f5f5f5 !important' : '#000 !important',
+                },
+                '&:-webkit-autofill:active': {
+                  WebkitBoxShadow: isDarkMode ? '0 0 0 1000px #424242 inset' : '0 0 0 1000px #fff inset',
+                  WebkitTextFillColor: isDarkMode ? '#f5f5f5 !important' : '#000 !important',
+                }
               }
             }}
           />
@@ -323,20 +346,37 @@ const Login = () => {
             size={isMobile ? "small" : "medium"}
             InputProps={{
               startAdornment: (
-                <InputAdornment position="start">
-                  <Lock sx={{ 
+                <InputAdornment position="start" sx={{
+                  // Corrige o fundo dos ícones no autocomplete
+                  '& .MuiSvgIcon-root': {
                     color: isDarkMode ? 'grey.400' : 'action.active',
-                    fontSize: isMobile ? '1rem' : '1.25rem'
-                  }} />
+                    fontSize: isMobile ? '1rem' : '1.25rem',
+                    zIndex: 1,
+                    position: 'relative'
+                  }
+                }}>
+                  <Lock />
                 </InputAdornment>
               ),
               endAdornment: (
-                <InputAdornment position="end">
+                <InputAdornment position="end" sx={{
+                  // Corrige o fundo dos ícones no autocomplete
+                  '& .MuiIconButton-root': {
+                    color: isDarkMode ? 'grey.400' : 'action.active',
+                    zIndex: 1,
+                    position: 'relative',
+                    bgcolor: 'transparent !important'
+                  },
+                  '& .MuiSvgIcon-root': {
+                    color: isDarkMode ? 'grey.400' : 'action.active',
+                    zIndex: 1,
+                    position: 'relative'
+                  }
+                }}>
                   <IconButton
                     onClick={() => setShowPassword(prev => !prev)}
                     edge="end"
                     size={isMobile ? "small" : "medium"}
-                    sx={{ color: isDarkMode ? 'grey.400' : 'action.active' }}
                   >
                     {showPassword ? <VisibilityOff /> : <Visibility />}
                   </IconButton>
@@ -355,6 +395,24 @@ const Login = () => {
               },
               '& .MuiInputBase-input': {
                 color: isDarkMode ? 'grey.100' : 'text.primary',
+                // Corrige o fundo claro do autocomplete do Chrome no tema escuro
+                '&:-webkit-autofill': {
+                  WebkitBoxShadow: isDarkMode ? '0 0 0 1000px #424242 inset' : '0 0 0 1000px #fff inset',
+                  WebkitTextFillColor: isDarkMode ? '#f5f5f5 !important' : '#000 !important',
+                  transition: 'background-color 5000s ease-in-out 0s',
+                },
+                '&:-webkit-autofill:hover': {
+                  WebkitBoxShadow: isDarkMode ? '0 0 0 1000px #424242 inset' : '0 0 0 1000px #fff inset',
+                  WebkitTextFillColor: isDarkMode ? '#f5f5f5 !important' : '#000 !important',
+                },
+                '&:-webkit-autofill:focus': {
+                  WebkitBoxShadow: isDarkMode ? '0 0 0 1000px #424242 inset' : '0 0 0 1000px #fff inset',
+                  WebkitTextFillColor: isDarkMode ? '#f5f5f5 !important' : '#000 !important',
+                },
+                '&:-webkit-autofill:active': {
+                  WebkitBoxShadow: isDarkMode ? '0 0 0 1000px #424242 inset' : '0 0 0 1000px #fff inset',
+                  WebkitTextFillColor: isDarkMode ? '#f5f5f5 !important' : '#000 !important',
+                }
               }
             }}
           />

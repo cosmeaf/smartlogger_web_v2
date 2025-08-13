@@ -105,7 +105,7 @@ export const NotificationProvider = ({ children }) => {
             name: equipment.name,
             part_name: maintenance.name, // Nome da peça/manutenção (ex: "Óleo do motor")
             remaining_hours: maintenance.remaining_hours,
-            worked_hours: maintenance.worked_hours || 0,
+            worked_hours: equipment.worked_hours || 0, // Usar worked_hours do equipamento
             device_id: equipment.device,
             alarm_hours: maintenance.alarm_hours,
             initial_hour_maintenance: maintenance.initial_hour_maintenance,

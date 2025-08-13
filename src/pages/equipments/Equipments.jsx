@@ -425,16 +425,18 @@ const Equipments = () => {
    * ✅ Exportar Dados
    */
   const exportToCSV = () => {
-    const headers = ['ID', 'Nome', 'Local', 'Horas Trabalhadas', 'Horas Restantes', 'Temperatura', 'Status'];
+    const headers = ['ID', 'Nome', 'Atualizado', 'Local', 'Horas Trabalhadas', 'Horas Restantes', 'Temperatura', 'Velocidade GPS', 'Status'];
     const csvData = [
       headers.join(','),
       ...filteredEquipments.map(eq => [
         eq.device || 'N/A',
         `"${eq.name}"`,
+        eq.deviceData?.updated_at ? new Date(eq.deviceData.updated_at).toLocaleString('pt-BR') : 'N/A',
         `"${eq.model || 'N/A'}"`,
         eq.worked_hours || 0,
         eq.min_remaining_hours || 0,
         eq.deviceData?.calculated_temperature || 'N/A',
+        eq.deviceData?.speed_gps || 'N/A',
         getMaintenanceStatus(eq.min_remaining_hours)
       ].join(','))
     ].join('\n');
@@ -560,6 +562,30 @@ const Equipments = () => {
         return tempA - tempB;
       } else {
         return tempB - tempA;
+      }
+    } else if (sortBy === 'updated_at') {
+      const dateA = a.deviceData?.updated_at ? new Date(a.deviceData.updated_at).getTime() : 0;
+      const dateB = b.deviceData?.updated_at ? new Date(b.deviceData.updated_at).getTime() : 0;
+      if (sortDirection === 'asc') {
+        return dateA - dateB;
+      } else {
+        return dateB - dateA;
+      }
+    } else if (sortBy === 'speed_gps') {
+      const speedA = a.deviceData?.speed_gps !== undefined ? a.deviceData.speed_gps : -Infinity;
+      const speedB = b.deviceData?.speed_gps !== undefined ? b.deviceData.speed_gps : -Infinity;
+      if (sortDirection === 'asc') {
+        return speedA - speedB;
+      } else {
+        return speedB - speedA;
+      }
+    } else if (sortBy === 'speed_gps') {
+      const speedA = a.deviceData?.speed_gps !== undefined ? a.deviceData.speed_gps : -Infinity;
+      const speedB = b.deviceData?.speed_gps !== undefined ? b.deviceData.speed_gps : -Infinity;
+      if (sortDirection === 'asc') {
+        return speedA - speedB;
+      } else {
+        return speedB - speedA;
       }
     }
     return 0;
@@ -725,6 +751,57 @@ const Equipments = () => {
                     </div>
                   </div>
                 </th>
+                {!isMobile && (
+                  <th className="py-3 px-4 text-sm font-semibold relative">
+                    <div className="flex items-center justify-center gap-2">
+                      <span>Atualizado</span>
+                      <div className="relative sort-dropdown">
+                        <button
+                          onClick={() => setOpenSortDropdown(openSortDropdown === 'updated_at' ? null : 'updated_at')}
+                          className={`flex items-center justify-center ${isMobile ? 'w-4 h-4' : 'w-6 h-6'} p-0 m-0 bg-transparent border-none shadow-none focus:outline-none focus:ring-0 text-white-1000 hover:text-gray-800`}
+                          title="Ordenar por Data de Atualização"
+                        >
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <circle cx="10" cy="4" r="1.2" />
+                            <circle cx="10" cy="10" r="1.2" />
+                            <circle cx="10" cy="16" r="1.2" />
+                          </svg>
+                        </button>
+
+                        {openSortDropdown === 'updated_at' && (
+                          <div className={`absolute right-0 top-8 ${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'} border rounded-lg shadow-lg py-1 z-50 min-w-[160px]`}>
+                            <button
+                              onClick={() => handleSortFromDropdown('updated_at', 'asc')}
+                              className={`flex items-center w-full px-3 py-2 text-sm ${isDarkMode ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors ${sortBy === 'updated_at' && sortDirection === 'asc' ? 'font-semibold' : ''
+                                }`}
+                            >
+                              <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h7a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM15 8a1 1 0 10-2 0v5.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L15 13.586V8z" clipRule="evenodd" />
+                              </svg>
+                              Mais Antigo
+                            </button>
+                            <button
+                              onClick={() => handleSortFromDropdown('updated_at', 'desc')}
+                              className={`flex items-center w-full px-3 py-2 text-sm ${isDarkMode ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors ${sortBy === 'updated_at' && sortDirection === 'desc' ? 'font-semibold' : ''
+                                }`}
+                            >
+                              <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h7a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM13 15a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 101.414 1.414L13 9.414V15z" clipRule="evenodd" />
+                              </svg>
+                              Mais Recente
+                            </button>
+                          </div>
+                        )}
+
+                        {sortBy === 'updated_at' && (
+                          <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-transparent text-white-500 text-xs flex items-center justify-center">
+                            {sortDirection === 'asc' ? '↑' : '↓'}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </th>
+                )}
                 {!isMobile && (
                   <th className="py-3 px-4 text-sm font-semibold relative">
                     <div className="flex items-center justify-center gap-2">
@@ -941,6 +1018,57 @@ const Equipments = () => {
                     </div>
                   </th>
                 )}
+                {!isMobile && (
+                  <th className="py-3 px-4 text-sm font-semibold relative">
+                    <div className="flex items-center justify-center gap-2">
+                      <span>Velocidade GPS</span>
+                      <div className="relative sort-dropdown">
+                        <button
+                          onClick={() => setOpenSortDropdown(openSortDropdown === 'speed_gps' ? null : 'speed_gps')}
+                          className={`flex items-center justify-center ${isMobile ? 'w-4 h-4' : 'w-6 h-6'} p-0 m-0 bg-transparent border-none shadow-none focus:outline-none focus:ring-0 text-white-1000 hover:text-gray-800`}
+                          title="Ordenar por Velocidade GPS"
+                        >
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <circle cx="10" cy="4" r="1.2" />
+                            <circle cx="10" cy="10" r="1.2" />
+                            <circle cx="10" cy="16" r="1.2" />
+                          </svg>
+                        </button>
+
+                        {openSortDropdown === 'speed_gps' && (
+                          <div className={`absolute right-0 top-8 ${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'} border rounded-lg shadow-lg py-1 z-50 min-w-[160px]`}>
+                            <button
+                              onClick={() => handleSortFromDropdown('speed_gps', 'asc')}
+                              className={`flex items-center w-full px-3 py-2 text-sm ${isDarkMode ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors ${sortBy === 'speed_gps' && sortDirection === 'asc' ? 'font-semibold' : ''
+                                }`}
+                            >
+                              <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h7a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM15 8a1 1 0 10-2 0v5.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L15 13.586V8z" clipRule="evenodd" />
+                              </svg>
+                              Crescente
+                            </button>
+                            <button
+                              onClick={() => handleSortFromDropdown('speed_gps', 'desc')}
+                              className={`flex items-center w-full px-3 py-2 text-sm ${isDarkMode ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'} transition-colors ${sortBy === 'speed_gps' && sortDirection === 'desc' ? 'font-semibold' : ''
+                                }`}
+                            >
+                              <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h7a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM13 15a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 101.414 1.414L13 9.414V15z" clipRule="evenodd" />
+                              </svg>
+                              Decrescente
+                            </button>
+                          </div>
+                        )}
+
+                        {sortBy === 'speed_gps' && (
+                          <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-transparent text-white-500 text-xs flex items-center justify-center">
+                            {sortDirection === 'asc' ? '↑' : '↓'}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </th>
+                )}
                 <th className={`${isMobile ? 'py-1 px-1 text-xs' : 'py-3 px-4 text-sm'} font-semibold relative`}>
                   <div className="flex items-center justify-center gap-2">
                     <span>{isMobile ? 'St.' : 'Status'}</span>
@@ -979,7 +1107,7 @@ const Equipments = () => {
                                   : (isDarkMode ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50')
                                   }`}
                               >
-                                <span className="w-4 h-4 mr-2">🔄</span>
+                                <div className="w-3 h-3 rounded-full bg-gray-400 mr-2"></div>
                                 Todos os Status
                               </button>
                               <button
@@ -992,7 +1120,7 @@ const Equipments = () => {
                                   : (isDarkMode ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50')
                                   }`}
                               >
-                                <span className="w-4 h-4 mr-2">🔴</span>
+                                <div className="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
                                 URGENTE
                               </button>
                               <button
@@ -1005,7 +1133,7 @@ const Equipments = () => {
                                   : (isDarkMode ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50')
                                   }`}
                               >
-                                <span className="w-4 h-4 mr-2">🟡</span>
+                                <div className="w-3 h-3 rounded-full bg-amber-500 mr-2"></div>
                                 ATENÇÃO
                               </button>
                               <button
@@ -1018,7 +1146,7 @@ const Equipments = () => {
                                   : (isDarkMode ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50')
                                   }`}
                               >
-                                <span className="w-4 h-4 mr-2">🟢</span>
+                                <div className="w-3 h-3 rounded-full bg-emerald-500 mr-2"></div>
                                 OK
                               </button>
                             </div>
@@ -1040,7 +1168,9 @@ const Equipments = () => {
                                   : (isDarkMode ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50')
                                   }`}
                               >
-                                <span className="w-4 h-4 mr-2">🌡️</span>
+                                <svg className="w-4 h-4 mr-2 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M10 2a1 1 0 011 1v5.586l2.707-2.707a1 1 0 011.414 1.414L11.414 10l3.707 3.707a1 1 0 01-1.414 1.414L11 12.414V18a1 1 0 11-2 0v-5.586L6.293 15.121a1 1 0 01-1.414-1.414L8.586 10 4.879 6.293a1 1 0 011.414-1.414L9 7.586V3a1 1 0 011-1z" clipRule="evenodd" />
+                                </svg>
                                 Todas as Temperaturas
                               </button>
                               <button
@@ -1053,7 +1183,9 @@ const Equipments = () => {
                                   : (isDarkMode ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50')
                                   }`}
                               >
-                                <span className="w-4 h-4 mr-2">🔥</span>
+                                <svg className="w-4 h-4 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M10 2a1 1 0 011 1v5.586l2.707-2.707a1 1 0 011.414 1.414L11.414 10l3.707 3.707a1 1 0 01-1.414 1.414L11 12.414V18a1 1 0 11-2 0v-5.586L6.293 15.121a1 1 0 01-1.414-1.414L8.586 10 4.879 6.293a1 1 0 011.414-1.414L9 7.586V3a1 1 0 011-1z" clipRule="evenodd" />
+                                </svg>
                                 ALTA {'>'}90°C
                               </button>
                               <button
@@ -1066,7 +1198,9 @@ const Equipments = () => {
                                   : (isDarkMode ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50')
                                   }`}
                               >
-                                <span className="w-4 h-4 mr-2">🟡</span>
+                                <svg className="w-4 h-4 mr-2 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M10 2a1 1 0 011 1v5.586l2.707-2.707a1 1 0 011.414 1.414L11.414 10l3.707 3.707a1 1 0 01-1.414 1.414L11 12.414V18a1 1 0 11-2 0v-5.586L6.293 15.121a1 1 0 01-1.414-1.414L8.586 10 4.879 6.293a1 1 0 011.414-1.414L9 7.586V3a1 1 0 011-1z" clipRule="evenodd" />
+                                </svg>
                                 MÉDIA 60-89°C
                               </button>
                               <button
@@ -1079,7 +1213,9 @@ const Equipments = () => {
                                   : (isDarkMode ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50')
                                   }`}
                               >
-                                <span className="w-4 h-4 mr-2">❄️</span>
+                                <svg className="w-4 h-4 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M10 2a1 1 0 011 1v5.586l2.707-2.707a1 1 0 011.414 1.414L11.414 10l3.707 3.707a1 1 0 01-1.414 1.414L11 12.414V18a1 1 0 11-2 0v-5.586L6.293 15.121a1 1 0 01-1.414-1.414L8.586 10 4.879 6.293a1 1 0 011.414-1.414L9 7.586V3a1 1 0 011-1z" clipRule="evenodd" />
+                                </svg>
                                 NORMAL {'<'}60°C
                               </button>
                             </div>
@@ -1125,6 +1261,29 @@ const Equipments = () => {
                       </div>
                     )}
                   </td>
+                  {!isMobile && (
+                    <td className="py-3 px-4">
+                      {equipment.deviceData?.updated_at ? (
+                        <div className="flex flex-col items-center justify-center text-center">
+                          <span className="font-medium text-sm text-gray-800">
+                            {new Date(equipment.deviceData.updated_at).toLocaleDateString('pt-BR', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric'
+                            })}
+                          </span>
+                          <span className="text-xs text-gray-500 mt-1">
+                            {new Date(equipment.deviceData.updated_at).toLocaleTimeString('pt-BR', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">N/A</span>
+                      )}
+                    </td>
+                  )}
                   {!isMobile && (
                     <td
                       className="py-3 px-4 cursor-pointer text-blue-600 hover:text-blue-800 hover:underline"
@@ -1176,29 +1335,61 @@ const Equipments = () => {
                       }
                     </td>
                   )}
+                  {!isMobile && (
+                    <td className="py-3 px-4">
+                      {equipment.deviceData?.speed_gps !== undefined
+                        ? (
+                          <div className="flex items-center justify-center">
+                            <span className="font-semibold">
+                              {Number(equipment.deviceData.speed_gps).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km/h
+                            </span>
+                          </div>
+                        )
+                        : <span className="text-gray-400">N/A</span>
+                      }
+                    </td>
+                  )}
                   <td className={`${isMobile ? 'py-1 px-1' : 'py-3 px-4'}`}>
-                    <div className={`flex ${isMobile ? 'flex-col gap-1' : 'flex-col gap-1'}`}>
+                    <div className={`flex ${isMobile ? 'flex-col gap-1' : 'flex-col gap-1.5'} items-center justify-center`}>
                       {/* Status de Manutenção */}
-                      <span className={`inline-flex items-center justify-center ${isMobile ? 'px-1 py-0.5 text-xs' : 'px-2 py-1 text-xs'} rounded-full font-semibold ${getMaintenanceStatus(equipment.min_remaining_hours) === 'URGENTE' ? 'bg-red-100 text-red-800' :
-                        getMaintenanceStatus(equipment.min_remaining_hours) === 'ATENÇÃO' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-green-100 text-green-800'
+                      <div className={`inline-flex items-center justify-center ${isMobile ? 'px-1.5 py-0.5 text-xs' : 'px-2 py-1 text-xs'} rounded-md font-medium border transition-all duration-200 ${getMaintenanceStatus(equipment.min_remaining_hours) === 'URGENTE' 
+                        ? 'bg-red-50 text-red-700 border-red-200' :
+                        getMaintenanceStatus(equipment.min_remaining_hours) === 'ATENÇÃO' 
+                        ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                        'bg-emerald-50 text-emerald-700 border-emerald-200'
                         }`}>
-                        {getMaintenanceStatus(equipment.min_remaining_hours) === 'URGENTE' ? '🔴' :
-                          getMaintenanceStatus(equipment.min_remaining_hours) === 'ATENÇÃO' ? '🟡' :
-                            '🟢'} {isMobile ? getMaintenanceStatus(equipment.min_remaining_hours).substring(0, 3) : getMaintenanceStatus(equipment.min_remaining_hours)}
-                      </span>
+                        <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${getMaintenanceStatus(equipment.min_remaining_hours) === 'URGENTE' 
+                          ? 'bg-red-500' :
+                          getMaintenanceStatus(equipment.min_remaining_hours) === 'ATENÇÃO' 
+                          ? 'bg-amber-500' :
+                          'bg-emerald-500'
+                          }`}></div>
+                        <span className="font-semibold">
+                          {isMobile ? getMaintenanceStatus(equipment.min_remaining_hours).substring(0, 3) : getMaintenanceStatus(equipment.min_remaining_hours)}
+                        </span>
+                      </div>
 
                       {/* Status de Temperatura (sempre visível) */}
                       {equipment.deviceData?.calculated_temperature !== undefined && equipment.deviceData.calculated_temperature <= 150 && (
-                        <span className={`inline-flex items-center justify-center ${isMobile ? 'px-1 py-0.5 text-xs' : 'px-2 py-1 text-xs'} rounded-full font-semibold ${equipment.deviceData.calculated_temperature > 90 ? 'bg-red-100 text-red-800' :
-                          equipment.deviceData.calculated_temperature > 60 ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-blue-100 text-blue-800'
+                        <div className={`inline-flex items-center justify-center ${isMobile ? 'px-1.5 py-0.5 text-xs' : 'px-2 py-1 text-xs'} rounded-md font-medium border transition-all duration-200 ${equipment.deviceData.calculated_temperature > 90 
+                          ? 'bg-red-50 text-red-700 border-red-200' :
+                          equipment.deviceData.calculated_temperature > 60 
+                          ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                          'bg-blue-50 text-blue-700 border-blue-200'
                           }`}>
-                          {equipment.deviceData.calculated_temperature > 90 ? '🔥' :
-                            equipment.deviceData.calculated_temperature > 60 ? '🟡' :
-                              '❄️'} {isMobile ? `${Math.round(equipment.deviceData.calculated_temperature)}°` :
-                                `${equipment.deviceData.calculated_temperature.toFixed(1)}°C`}
-                        </span>
+                          <svg className={`w-2.5 h-2.5 mr-1 ${equipment.deviceData.calculated_temperature > 90 
+                            ? 'text-red-500' :
+                            equipment.deviceData.calculated_temperature > 60 
+                            ? 'text-orange-500' :
+                            'text-blue-500'
+                            }`} fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 2a1 1 0 011 1v5.586l2.707-2.707a1 1 0 011.414 1.414L11.414 10l3.707 3.707a1 1 0 01-1.414 1.414L11 12.414V18a1 1 0 11-2 0v-5.586L6.293 15.121a1 1 0 01-1.414-1.414L8.586 10 4.879 6.293a1 1 0 011.414-1.414L9 7.586V3a1 1 0 011-1z" clipRule="evenodd" />
+                          </svg>
+                          <span className="font-semibold">
+                            {isMobile ? `${Math.round(equipment.deviceData.calculated_temperature)}°` :
+                              `${equipment.deviceData.calculated_temperature.toFixed(1)}°C`}
+                          </span>
+                        </div>
                       )}
                     </div>
                   </td>
@@ -1332,7 +1523,7 @@ const Equipments = () => {
               ))}
               {currentItems.length === 0 && (
                 <tr>
-                  <td colSpan={isMobile ? 6 : 8} className="py-12 text-gray-500">
+                  <td colSpan={isMobile ? 6 : 10} className="py-12 text-gray-500">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <svg className="w-12 h-12 opacity-50" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />

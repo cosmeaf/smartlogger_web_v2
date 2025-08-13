@@ -434,7 +434,7 @@ const NotificationBell = () => {
                           isDarkMode ? 'text-gray-300' : 'text-gray-600'
                         }`}>
                           <FaClock className="text-xs opacity-60" />
-                          <span>Trabalhadas: {notification.equipment.worked_hours}h</span>
+                          <span>Trabalhadas: {parseFloat(notification.equipment.worked_hours || 0).toFixed(1)}h</span>
                         </div>
                         
                         <div className={`flex items-center space-x-2 ${
