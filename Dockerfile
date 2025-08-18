@@ -1,4 +1,4 @@
-# Dockerfile
+# Dockerfile - APENAS FRONTEND (como era originalmente)
 FROM node:18 AS build
 
 # Set working directory

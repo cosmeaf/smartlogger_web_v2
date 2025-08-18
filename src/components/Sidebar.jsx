@@ -15,6 +15,7 @@ import {
   FaChevronRight,
   FaCog,
   FaSignOutAlt,
+  FaChartLine,
 } from 'react-icons/fa';
 import packageJson from '../../package.json';
 
@@ -41,6 +42,7 @@ const Sidebar = () => {
     { to: '/dashboard', label: 'Dashboard', icon: <FaHome />, category: 'main' },
     // { to: '/dashboard/devices', label: 'Dispositivos', icon: <FaTruckMonster />, category: 'main' },
     { to: '/dashboard/equipments', label: 'Equipamentos', icon: <FaTractor />, category: 'main' },
+    { to: '/dashboard/reports', label: 'Relatórios', icon: <FaChartLine />, category: 'main' },
     // { to: '/dashboard/employees', label: 'Colaboradores', icon: <FaUserFriends />, category: 'main' },
   ];
 

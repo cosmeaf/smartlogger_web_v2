@@ -6,6 +6,10 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export default defineConfig(({ mode }) => {
+  // Configuração de portas baseada no ambiente
+  const isDevelopment = mode === 'development';
+  const frontendPort = isDevelopment ? 3001 : 4000;
+  
   return {
     plugins: [
       react(),
@@ -57,7 +61,13 @@ export default defineConfig(({ mode }) => {
     ],
     server: {
       host: '0.0.0.0',
-      port: process.env.VITE_PORT || 3001,
+      port: frontendPort, // 3001 em dev, 4000 em produção
+      strictPort: true, // Força o uso da porta específica, falha se ocupada
+    },
+    preview: {
+      host: '0.0.0.0',
+      port: frontendPort, // Mesma porta para preview
+      strictPort: true, // Força o uso da porta específica, falha se ocupada
     },
     hmr: {
       protocol: 'wss',

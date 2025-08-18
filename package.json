@@ -4,10 +4,19 @@
   "version": "3.3.4",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "vite --mode development",
+    "dev:backend": "cd backend && npm run dev",
+    "build": "vite build --mode production",
+    "build:dev": "vite build --mode development", 
+    "preview": "vite preview --mode production",
+    "preview:dev": "vite preview --mode development",
+    "check-ports": "bash scripts/check-ports.sh",
+    "check-ports:prod": "bash scripts/check-ports-prod.sh",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "deploy:frontend": "bash ../deploy_smartlogger_frontend_Ngit.sh",
+    "deploy:backend": "bash ../deploy_smartlogger_backend_Ngit.sh",
+    "deploy:fullstack": "bash ../deploy_smartlogger_fullstack_Ngit.sh"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -28,6 +37,7 @@
     "react-table": "^7.8.0",
     "react-toastify": "^10.0.6",
     "react-wavify": "^1.11.1",
+    "recharts": "^3.1.2",
     "stream-browserify": "^3.0.0",
     "sweetalert2": "^11.14.5"
   },
@@ -37,6 +47,7 @@
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.3",
     "autoprefixer": "^10.4.20",
+    "concurrently": "^9.2.0",
     "eslint": "^9.13.0",
     "eslint-plugin-react": "^7.37.2",
     "eslint-plugin-react-hooks": "^5.0.0",

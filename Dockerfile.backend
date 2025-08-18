@@ -1,0 +1,23 @@
+# Dockerfile.backend - Apenas para o backend Node.js
+FROM node:18
+
+# Set working directory
+WORKDIR /app
+
+# Copy backend package.json and package-lock.json
+COPY backend/package*.json ./
+
+# Install backend dependencies
+RUN npm install
+
+# Copy backend source code
+COPY backend/ ./
+
+# Set production port
+ENV PORT=4001
+
+# Expose backend port
+EXPOSE 4001
+
+# Command to start the backend
+CMD ["npm", "start"]

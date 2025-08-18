@@ -31,6 +31,9 @@ import Maintenance from './pages/maintenance/Maintenance';
 import MaintenanceCreate from './pages/maintenance/MaintenanceCreate';
 import MaintenanceEdit from './pages/maintenance/MaintenanceEdit';
 
+// Records Pages
+import Reports from './pages/records/Reports';
+
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
 import LogoutHandler from './components/LogoutHandler';
@@ -72,6 +75,9 @@ function App() {
           >
             {/* Dashboard Principal */}
             <Route index element={<Main />} />
+            
+            {/* ========== ROTAS DE RELATÓRIOS ========== */}
+            <Route path="reports" element={<Reports />} />
             
             {/* ========== ROTAS DE DISPOSITIVOS ========== */}
             <Route path="devices" element={<Devices />} />

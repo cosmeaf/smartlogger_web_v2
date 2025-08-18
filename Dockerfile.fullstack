@@ -1,0 +1,49 @@
+# Dockerfile.fullstack - FRONTEND + BACKEND JUNTOS
+FROM node:18
+
+# Set working directory
+WORKDIR /app
+
+# Copy package.json and package-lock.json
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy backend dependencies
+COPY backend/package*.json ./backend/
+RUN cd backend && npm install
+
+# Copy project files
+COPY . .
+
+# Build the Vite app for production
+RUN npm run build
+
+# Install PM2 for process management
+RUN npm install -g pm2
+
+# Create PM2 ecosystem file (usando .cjs para evitar conflito ES modules)
+RUN echo 'module.exports = {\n\
+  apps: [\n\
+    {\n\
+      name: "frontend",\n\
+      script: "npx serve -s dist -l 4000",\n\
+      cwd: "/app"\n\
+    },\n\
+    {\n\
+      name: "backend",\n\
+      script: "server.js",\n\
+      cwd: "/app/backend",\n\
+      env: {\n\
+        PORT: "4001"\n\
+      }\n\
+    }\n\
+  ]\n\
+};' > ecosystem.config.cjs
+
+# Expose both ports (corrigido: 4001 para backend)
+EXPOSE 4000 4001
+
+# Command to start both frontend and backend
+CMD ["pm2-runtime", "start", "ecosystem.config.cjs"]
