@@ -9,6 +9,7 @@ export default defineConfig(({ mode }) => {
   // Configuração de portas baseada no ambiente
   const isDevelopment = mode === 'development';
   const frontendPort = isDevelopment ? 3001 : 4000;
+  const backendPort = isDevelopment ? 3002 : 4001;
   
   return {
     plugins: [
@@ -63,6 +64,14 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       port: frontendPort, // 3001 em dev, 4000 em produção
       strictPort: true, // Força o uso da porta específica, falha se ocupada
+      proxy: {
+        '/api': {
+          target: process.env.VITE_API_URL || `http://localhost:${backendPort}`,
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/api/, '/api')
+        }
+      }
     },
     preview: {
       host: '0.0.0.0',

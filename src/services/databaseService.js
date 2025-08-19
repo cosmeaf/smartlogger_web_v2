@@ -1,17 +1,31 @@
 // src/services/databaseService.js
 import axios from 'axios';
 
-// URL local usando proxy do Vite - vai redirecionar para http://localhost:3002
-const DATABASE_API_URL = '/database';
+// URL base do backend - usar proxy do Vite em desenvolvimento
+// Configuração da URL base da API
+const getApiBaseUrl = () => {
+  if (import.meta.env.MODE === 'development') {
+    return import.meta.env.VITE_API_URL || 'http://localhost:3002';
+  } else {
+    return import.meta.env.VITE_API_URL || 'http://localhost:4001';
+  }
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 const databaseService = {
-  // Buscar todos os dispositivos da tabela tc_devices
-  async getTcDevices() {
+  // Método genérico para buscar dados de qualquer tabela
+  async getTableData(tableName, limit = 100, filters = {}) {
     try {
-      console.log('🔄 Buscando dispositivos da tabela tc_devices...');
+      console.log(`🔄 Buscando dados da tabela ${tableName}...`);
       
-      // Fazer requisição para /database/tc-devices (vai ser redirecionado pelo proxy)
-      const response = await axios.get(`${DATABASE_API_URL}/tc-devices`);
+      // Construir parâmetros da query
+      const params = new URLSearchParams({
+        limit: limit.toString(),
+        ...filters
+      });
+      
+      const response = await axios.get(`/api/table/${tableName}?${params.toString()}`);
       
       console.log('✅ Dados recebidos:', response.data);
       
@@ -19,82 +33,191 @@ const databaseService = {
         data: response.data.data || [],
         success: response.data.success,
         count: response.data.count,
-        message: response.data.message || 'Dados obtidos com sucesso'
+        message: response.data.message || 'Dados obtidos com sucesso',
+        tableName
       };
       
     } catch (error) {
-      console.error('❌ Erro ao buscar dispositivos:', error);
-      
-      // Se der erro na API, usar dados mock como fallback
-      console.log('🔄 Usando dados mock como fallback...');
-      const mockData = [
-        {
-          id: 1,
-          name: 'Device 001',
-          uniqueid: 'DEV001',
-          status: 'online',
-          lastupdate: '2025-08-14 10:30:00',
-          positionid: 12345,
-          groupid: 1,
-          phone: '+5511999999999',
-          model: 'GPS Tracker Model A',
-          contact: 'João Silva',
-          category: 'vehicle',
-          disabled: false,
-        },
-        {
-          id: 2,
-          name: 'Device 002',
-          uniqueid: 'DEV002',
-          status: 'offline',
-          lastupdate: '2025-08-14 09:15:00',
-          positionid: 12346,
-          groupid: 1,
-          phone: '+5511888888888',
-          model: 'GPS Tracker Model B',
-          contact: 'Maria Santos',
-          category: 'vehicle',
-          disabled: false,
-        },
-        {
-          id: 3,
-          name: 'Device 003',
-          uniqueid: 'DEV003',
-          status: 'online',
-          lastupdate: '2025-08-14 11:00:00',
-          positionid: 12347,
-          groupid: 2,
-          phone: '+5511777777777',
-          model: 'GPS Tracker Model C',
-          contact: 'Pedro Costa',
-          category: 'person',
-          disabled: false,
-        },
-      ];
-
-      return {
-        data: mockData,
-        success: true,
-        count: mockData.length,
-        message: '⚠️ Usando dados mock (erro na conexão com o banco)'
-      };
+      console.error(`❌ Erro ao buscar dados da tabela ${tableName}:`, error);
+      throw error;
     }
   },
 
-  // Executar query SQL personalizada
-  async executeSqlQuery(query) {
+  // Método para buscar dados com query SQL personalizada
+  async getCustomQuery(tableName, whereClause = '', orderBy = '', limit = 100) {
     try {
-      console.log('📝 Executando query personalizada:', query);
+      console.log(`🔄 Executando query personalizada na tabela ${tableName}...`);
       
-      const response = await axios.post(`${DATABASE_API_URL}/query`, {
-        query: query
+      const params = new URLSearchParams({
+        limit: limit.toString()
       });
-
-      console.log('✅ Query executada com sucesso:', response.data);
-      return response.data;
+      
+      if (whereClause) params.append('where', whereClause);
+      if (orderBy) params.append('order', orderBy);
+      
+      const response = await axios.get(`/api/table/${tableName}?${params.toString()}`);
+      
+      console.log('✅ Query personalizada executada:', response.data);
+      
+      return {
+        data: response.data.data || [],
+        success: response.data.success,
+        count: response.data.count,
+        message: response.data.message || 'Query executada com sucesso',
+        tableName
+      };
       
     } catch (error) {
-      console.error('❌ Erro ao executar query SQL:', error);
+      console.error(`❌ Erro ao executar query personalizada:`, error);
+      throw error;
+    }
+  },
+
+  // Buscar todos os dispositivos da tabela tc_devices
+  async getTcDevices() {
+    try {
+      console.log('🔄 Buscando dispositivos da tabela tc_devices...');
+      
+      const response = await axios.get('/api/table/tc_devices');
+      
+      console.log('✅ Dispositivos recebidos:', response.data);
+      
+      return response.data.data || [];
+      
+    } catch (error) {
+      console.error('❌ Erro ao buscar dispositivos:', error);
+      throw error;
+    }
+  },
+
+  // Buscar posições de um dispositivo específico com filtro de período
+  async getDevicePositions(deviceId, startDate, endDate, limit = 1000) {
+    try {
+      console.log(`🔄 Buscando posições do dispositivo ${deviceId}...`);
+      
+      let url = `/api/positions/device/${deviceId}?limit=${limit}`;
+      
+      if (startDate && endDate) {
+        url += `&startDate=${startDate}&endDate=${endDate}`;
+      }
+      
+      const response = await axios.get(url);
+      
+      console.log('✅ Posições recebidas:', response.data);
+      
+      return response.data.data || [];
+      
+    } catch (error) {
+      console.error(`❌ Erro ao buscar posições do dispositivo ${deviceId}:`, error);
+      throw error;
+    }
+  },
+
+  // Listar todas as tabelas disponíveis no banco
+  async getAllTables() {
+    try {
+      console.log('🔄 Buscando lista de tabelas...');
+      
+      const response = await axios.get('/api/tables');
+      
+      console.log('✅ Tabelas recebidas:', response.data);
+      
+      return {
+        data: response.data.data || [],
+        success: response.data.success,
+        count: response.data.count,
+        message: response.data.message || 'Tabelas obtidas com sucesso'
+      };
+      
+    } catch (error) {
+      console.error('❌ Erro ao buscar tabelas:', error);
+      throw error;
+    }
+  },
+
+  // Buscar dados com filtros avançados para qualquer tabela
+  async getAdvancedData(tableName, options = {}) {
+    try {
+      const {
+        where = '',
+        orderBy = 'id DESC',
+        limit = 100,
+        offset = 0,
+        columns = '*'
+      } = options;
+
+      console.log(`🔄 Buscando dados avançados da tabela ${tableName}...`, options);
+      
+      const params = new URLSearchParams({
+        limit: limit.toString(),
+        offset: offset.toString()
+      });
+
+      if (where) params.append('where', where);
+      if (orderBy) params.append('order', orderBy);
+      if (columns !== '*') params.append('columns', columns);
+      
+      const response = await axios.get(`/api/table/${tableName}?${params.toString()}`);
+      
+      console.log('✅ Dados avançados recebidos:', response.data);
+      
+      return {
+        data: response.data.data || [],
+        success: response.data.success,
+        count: response.data.count,
+        message: response.data.message || 'Dados obtidos com sucesso',
+        tableName,
+        options
+      };
+      
+    } catch (error) {
+      console.error(`❌ Erro ao buscar dados avançados da tabela ${tableName}:`, error);
+      throw error;
+    }
+  },
+
+  // Buscar posições com filtros específicos
+  async getPositionsWithFilters(deviceId, filters = {}) {
+    try {
+      const {
+        startDate,
+        endDate,
+        minSpeed = null,
+        maxSpeed = null,
+        hasAttributes = null,
+        limit = 1000
+      } = filters;
+
+      console.log(`🔄 Buscando posições filtradas do dispositivo ${deviceId}...`, filters);
+      
+      let whereConditions = [`deviceid = ${deviceId}`];
+      
+      if (startDate && endDate) {
+        whereConditions.push(`devicetime BETWEEN '${startDate}' AND '${endDate}'`);
+      }
+      
+      if (minSpeed !== null) {
+        whereConditions.push(`speed >= ${minSpeed}`);
+      }
+      
+      if (maxSpeed !== null) {
+        whereConditions.push(`speed <= ${maxSpeed}`);
+      }
+      
+      if (hasAttributes !== null) {
+        whereConditions.push(hasAttributes ? 'attributes IS NOT NULL' : 'attributes IS NULL');
+      }
+      
+      const whereClause = whereConditions.join(' AND ');
+      
+      return await this.getAdvancedData('tc_positions', {
+        where: whereClause,
+        orderBy: 'devicetime DESC',
+        limit
+      });
+      
+    } catch (error) {
+      console.error(`❌ Erro ao buscar posições filtradas:`, error);
       throw error;
     }
   },
@@ -102,10 +225,52 @@ const databaseService = {
   // Testar conexão com o servidor
   async testConnection() {
     try {
-      const response = await axios.get(`${DATABASE_API_URL}/test`);
+      const response = await axios.get('/api/tables');
       return response.data;
     } catch (error) {
       console.error('❌ Erro ao testar conexão:', error);
+      throw error;
+    }
+  },
+
+  // Buscar dados de estatísticas
+  async getStats(tableName) {
+    try {
+      console.log(`🔄 Buscando estatísticas da tabela ${tableName}...`);
+      
+      const response = await axios.get(`/api/table/${tableName}?limit=1`);
+      
+      return {
+        tableName,
+        totalRecords: response.data.count || 0,
+        hasData: (response.data.data && response.data.data.length > 0),
+        lastUpdated: new Date().toISOString()
+      };
+      
+    } catch (error) {
+      console.error(`❌ Erro ao buscar estatísticas da tabela ${tableName}:`, error);
+      return {
+        tableName,
+        totalRecords: 0,
+        hasData: false,
+        error: error.message
+      };
+    }
+  },
+
+  // Método para buscar dados paginados
+  async getPaginatedData(tableName, page = 1, pageSize = 20, filters = {}) {
+    try {
+      const offset = (page - 1) * pageSize;
+      
+      return await this.getAdvancedData(tableName, {
+        limit: pageSize,
+        offset,
+        ...filters
+      });
+      
+    } catch (error) {
+      console.error(`❌ Erro ao buscar dados paginados:`, error);
       throw error;
     }
   }
