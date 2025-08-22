@@ -45,7 +45,12 @@ function App() {
         <AuthProvider>
           <NotificationProvider>
             <ToastContainer />
-            <Router>
+            <Router
+              future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true
+              }}
+            >
           <Routes>
           {/* ========== ROTAS PÚBLICAS (AUTENTICAÇÃO) ========== */}
           <Route path="/" element={

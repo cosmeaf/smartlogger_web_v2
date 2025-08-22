@@ -1745,7 +1745,7 @@ const Main = () => {
 
   return (
     <div className={`min-h-screen ${isMobile ? 'p-2' : 'p-6'} overflow-x-hidden`}>
-      <style jsx>{`
+      <style>{`
         @keyframes fadeInUp {
           from {
             opacity: 0;
