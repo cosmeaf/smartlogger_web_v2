@@ -10,7 +10,16 @@ const PORT = process.env.PORT || (process.env.NODE_ENV === 'production' ? 4001 :
 const allowedOrigins = [
   process.env.FRONTEND_URL || 'http://localhost:3001',
   process.env.FRONTEND_PROD_URL || 'http://77.37.41.27:4000',
-  process.env.FRONTEND_DEV_URL || 'http://localhost:3001'
+  process.env.FRONTEND_DEV_URL || 'http://localhost:3001',
+  process.env.FRONTEND_DOMAIN_URL || 'https://smartlogger.com.br',
+  // Adicionar variações do domínio de produção e desenvolvimento
+  'https://smartlogger.com.br',
+  'https://www.smartlogger.com.br',
+  'http://smartlogger.com.br',
+  'http://www.smartlogger.com.br',
+  'http://77.37.41.27:3001', // Frontend desenvolvimento na VPS
+  'http://localhost:3001',
+  'http://127.0.0.1:3001'
 ].filter(Boolean);
 
 // Middlewares

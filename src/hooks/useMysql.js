@@ -5,8 +5,9 @@ const useMysql = () => {
   const [error, setError] = useState(null);
 
   // Configuração do servidor MySQL
-  const MYSQL_SERVER_URL = process.env.REACT_APP_SERVER_URL || 
-    (process.env.NODE_ENV === 'production' 
+  const MYSQL_SERVER_URL = import.meta.env.VITE_SERVER_URL || 
+    import.meta.env.REACT_APP_SERVER_URL ||
+    (import.meta.env.MODE === 'production' 
       ? 'http://77.37.41.27:4001' 
       : 'http://localhost:3002');
 

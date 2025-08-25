@@ -1,17 +1,114 @@
 // src/services/databaseService.js
 import axios from 'axios';
 
-// URL base do backend - usar proxy do Vite em desenvolvimento
-// Configuração da URL base da API
-const getApiBaseUrl = () => {
+// URLs possíveis para tentar conectar
+const getApiUrls = () => {
+  const urls = [];
+  
   if (import.meta.env.MODE === 'development') {
-    return import.meta.env.VITE_API_URL || 'http://localhost:3002';
+    // Em desenvolvimento, tentar primeiro localhost, depois produção
+    urls.push(import.meta.env.VITE_SERVER_URL || 'http://localhost:3002');
+    urls.push('https://apidev.smartlogger.com.br');
   } else {
-    return import.meta.env.VITE_API_URL || 'http://localhost:4001';
+    // Em produção, tentar primeiro produção, depois localhost
+    urls.push(import.meta.env.VITE_SERVER_URL || 'https://api.smartlogger.com.br');
+    urls.push('http://localhost:3002');
   }
+  
+  return urls;
 };
 
-const API_BASE_URL = getApiBaseUrl();
+const API_URLS = getApiUrls();
+
+// Sistema de cache para URL funcional
+let workingApiUrl = null;
+let lastFailureTime = {};
+const RETRY_DELAY = 30000; // 30 segundos antes de tentar novamente uma URL que falhou
+
+console.log('🌐 Database Service - URLs disponíveis:', API_URLS);
+console.log('🔧 Modo:', import.meta.env.MODE);
+console.log('🔧 VITE_SERVER_URL:', import.meta.env.VITE_SERVER_URL);
+
+// Função inteligente para tentar conectar com cache e retry
+const smartRequest = async (endpoint, options = {}) => {
+  const now = Date.now();
+  
+  // Se temos uma URL que funciona, tentar ela primeiro
+  if (workingApiUrl) {
+    try {
+      const response = await axios({
+        ...options,
+        url: `${workingApiUrl}${endpoint}`,
+        timeout: 5000,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers
+        }
+      });
+      
+      return response;
+      
+    } catch (error) {
+      console.warn(`⚠️ URL cachada falhou: ${workingApiUrl} - tentando outras opções...`);
+      workingApiUrl = null; // Limpar cache
+    }
+  }
+  
+  // Tentar todas as URLs disponíveis
+  const urlsToTry = API_URLS.filter(url => {
+    // Pular URLs que falharam recentemente
+    const lastFailure = lastFailureTime[url];
+    if (lastFailure && (now - lastFailure) < RETRY_DELAY) {
+      return false;
+    }
+    return true;
+  });
+  
+  if (urlsToTry.length === 0) {
+    // Se todas as URLs estão em cooldown, tentar a mais antiga
+    urlsToTry.push(API_URLS[0]);
+  }
+  
+  let lastError = null;
+  
+  for (const url of urlsToTry) {
+    try {
+      console.log(`🔄 Tentando: ${url}${endpoint}`);
+      
+      const response = await axios({
+        ...options,
+        url: `${url}${endpoint}`,
+        timeout: 5000,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers
+        }
+      });
+      
+      // Sucesso! Cachear esta URL
+      workingApiUrl = url;
+      delete lastFailureTime[url]; // Limpar falhas anteriores
+      
+      if (urlsToTry.indexOf(url) > 0) {
+        console.log(`✅ Conectado com sucesso em: ${url}`);
+      }
+      
+      return response;
+      
+    } catch (error) {
+      lastError = error;
+      lastFailureTime[url] = now;
+      
+      // Só mostrar erro detalhado se for o último URL
+      if (urlsToTry.indexOf(url) === urlsToTry.length - 1) {
+        console.error(`❌ Todas as URLs falharam para ${endpoint}`);
+        console.error('Último erro:', error.message);
+      }
+    }
+  }
+  
+  throw lastError;
+};
 
 const databaseService = {
   // Método genérico para buscar dados de qualquer tabela
@@ -25,7 +122,9 @@ const databaseService = {
         ...filters
       });
       
-      const response = await axios.get(`/api/table/${tableName}?${params.toString()}`);
+      const response = await smartRequest(`/api/table/${tableName}?${params.toString()}`, {
+        method: 'GET'
+      });
       
       console.log('✅ Dados recebidos:', response.data);
       
@@ -38,7 +137,7 @@ const databaseService = {
       };
       
     } catch (error) {
-      console.error(`❌ Erro ao buscar dados da tabela ${tableName}:`, error);
+      console.error(`❌ Erro ao buscar dados da tabela ${tableName}:`, error.message);
       throw error;
     }
   },
@@ -55,7 +154,9 @@ const databaseService = {
       if (whereClause) params.append('where', whereClause);
       if (orderBy) params.append('order', orderBy);
       
-      const response = await axios.get(`/api/table/${tableName}?${params.toString()}`);
+      const response = await smartRequest(`/api/table/${tableName}?${params.toString()}`, {
+        method: 'GET'
+      });
       
       console.log('✅ Query personalizada executada:', response.data);
       
@@ -68,7 +169,7 @@ const databaseService = {
       };
       
     } catch (error) {
-      console.error(`❌ Erro ao executar query personalizada:`, error);
+      console.error(`❌ Erro ao executar query personalizada:`, error.message);
       throw error;
     }
   },
@@ -78,14 +179,16 @@ const databaseService = {
     try {
       console.log('🔄 Buscando dispositivos da tabela tc_devices...');
       
-      const response = await axios.get('/api/table/tc_devices');
+      const response = await smartRequest('/api/table/tc_devices', {
+        method: 'GET'
+      });
       
       console.log('✅ Dispositivos recebidos:', response.data);
       
       return response.data.data || [];
       
     } catch (error) {
-      console.error('❌ Erro ao buscar dispositivos:', error);
+      console.error('❌ Erro ao buscar dispositivos:', error.message);
       throw error;
     }
   },
@@ -95,20 +198,22 @@ const databaseService = {
     try {
       console.log(`🔄 Buscando posições do dispositivo ${deviceId}...`);
       
-      let url = `/api/positions/device/${deviceId}?limit=${limit}`;
+      let endpoint = `/api/positions/device/${deviceId}?limit=${limit}`;
       
       if (startDate && endDate) {
-        url += `&startDate=${startDate}&endDate=${endDate}`;
+        endpoint += `&startDate=${startDate}&endDate=${endDate}`;
       }
       
-      const response = await axios.get(url);
+      const response = await smartRequest(endpoint, {
+        method: 'GET'
+      });
       
       console.log('✅ Posições recebidas:', response.data);
       
       return response.data.data || [];
       
     } catch (error) {
-      console.error(`❌ Erro ao buscar posições do dispositivo ${deviceId}:`, error);
+      console.error(`❌ Erro ao buscar posições do dispositivo ${deviceId}:`, error.message);
       throw error;
     }
   },
@@ -118,7 +223,9 @@ const databaseService = {
     try {
       console.log('🔄 Buscando lista de tabelas...');
       
-      const response = await axios.get('/api/tables');
+      const response = await smartRequest('/api/tables', {
+        method: 'GET'
+      });
       
       console.log('✅ Tabelas recebidas:', response.data);
       
@@ -130,7 +237,7 @@ const databaseService = {
       };
       
     } catch (error) {
-      console.error('❌ Erro ao buscar tabelas:', error);
+      console.error('❌ Erro ao buscar tabelas:', error.message);
       throw error;
     }
   },
@@ -157,7 +264,9 @@ const databaseService = {
       if (orderBy) params.append('order', orderBy);
       if (columns !== '*') params.append('columns', columns);
       
-      const response = await axios.get(`/api/table/${tableName}?${params.toString()}`);
+      const response = await smartRequest(`/api/table/${tableName}?${params.toString()}`, {
+        method: 'GET'
+      });
       
       console.log('✅ Dados avançados recebidos:', response.data);
       
@@ -171,7 +280,7 @@ const databaseService = {
       };
       
     } catch (error) {
-      console.error(`❌ Erro ao buscar dados avançados da tabela ${tableName}:`, error);
+      console.error(`❌ Erro ao buscar dados avançados da tabela ${tableName}:`, error.message);
       throw error;
     }
   },
@@ -225,10 +334,12 @@ const databaseService = {
   // Testar conexão com o servidor
   async testConnection() {
     try {
-      const response = await axios.get('/api/tables');
+      const response = await smartRequest('/api/tables', {
+        method: 'GET'
+      });
       return response.data;
     } catch (error) {
-      console.error('❌ Erro ao testar conexão:', error);
+      console.error('❌ Erro ao testar conexão:', error.message);
       throw error;
     }
   },
@@ -238,7 +349,9 @@ const databaseService = {
     try {
       console.log(`🔄 Buscando estatísticas da tabela ${tableName}...`);
       
-      const response = await axios.get(`/api/table/${tableName}?limit=1`);
+      const response = await smartRequest(`/api/table/${tableName}?limit=1`, {
+        method: 'GET'
+      });
       
       return {
         tableName,
@@ -248,7 +361,7 @@ const databaseService = {
       };
       
     } catch (error) {
-      console.error(`❌ Erro ao buscar estatísticas da tabela ${tableName}:`, error);
+      console.error(`❌ Erro ao buscar estatísticas da tabela ${tableName}:`, error.message);
       return {
         tableName,
         totalRecords: 0,
@@ -270,9 +383,29 @@ const databaseService = {
       });
       
     } catch (error) {
-      console.error(`❌ Erro ao buscar dados paginados:`, error);
+      console.error(`❌ Erro ao buscar dados paginados:`, error.message);
       throw error;
     }
+  },
+
+  // Método para obter informações do sistema de conexão
+  getConnectionInfo() {
+    return {
+      workingUrl: workingApiUrl,
+      availableUrls: API_URLS,
+      failureTimes: lastFailureTime,
+      retryDelay: RETRY_DELAY,
+      mode: import.meta.env.MODE
+    };
+  },
+
+  // Método para forçar reset do cache de URLs
+  resetConnectionCache() {
+    workingApiUrl = null;
+    Object.keys(lastFailureTime).forEach(url => {
+      delete lastFailureTime[url];
+    });
+    console.log('🔄 Cache de conexão resetado');
   }
 };
 

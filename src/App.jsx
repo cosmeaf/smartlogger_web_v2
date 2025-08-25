@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -6,6 +6,7 @@ import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { DeviceProvider } from './context/DeviceContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { debugEnvVars } from './utils/envCheck';
 
 // Auth Pages
 import Login from './pages/auth/Login';
@@ -39,6 +40,11 @@ import PublicRoute from './components/PublicRoute';
 import LogoutHandler from './components/LogoutHandler';
 
 function App() {
+  // Debug das variáveis de ambiente na inicialização
+  useEffect(() => {
+    debugEnvVars();
+  }, []);
+
   return (
     <DeviceProvider>
       <ThemeProvider>

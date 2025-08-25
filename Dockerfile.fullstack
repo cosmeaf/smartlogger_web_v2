@@ -17,26 +17,40 @@ RUN cd backend && npm install
 # Copy project files
 COPY . .
 
+# Set environment variables for build
+ENV NODE_ENV=production
+ENV VITE_MYSQL_HOST=77.37.41.27
+ENV VITE_MYSQL_PORT=4001
+ENV VITE_MYSQL_BASE_URL=https://apidev.smartlogger.com.br
+ENV VITE_SERVER_URL=https://apidev.smartlogger.com.br
+ENV VITE_API_URL=https://apidev.smartlogger.com.br
+ENV VITE_FRONTEND_DOMAIN=https://smartlogger.com.br
+
 # Build the Vite app for production
 RUN npm run build
 
-# Install PM2 for process management
-RUN npm install -g pm2
+# Install PM2 and serve globally for process management
+RUN npm install -g pm2 serve
 
 # Create PM2 ecosystem file (usando .cjs para evitar conflito ES modules)
 RUN echo 'module.exports = {\n\
   apps: [\n\
     {\n\
       name: "frontend",\n\
-      script: "npx serve -s dist -l 4000",\n\
-      cwd: "/app"\n\
+      script: "npx serve -s dist -l 4000 --no-clipboard",\n\
+      cwd: "/app",\n\
+      env: {\n\
+        NODE_ENV: "production"\n\
+      }\n\
     },\n\
     {\n\
       name: "backend",\n\
       script: "server.js",\n\
       cwd: "/app/backend",\n\
       env: {\n\
-        PORT: "4001"\n\
+        NODE_ENV: "production",\n\
+        PORT: "4001",\n\
+        FRONTEND_DOMAIN_URL: "https://smartlogger.com.br"\n\
       }\n\
     }\n\
   ]\n\
