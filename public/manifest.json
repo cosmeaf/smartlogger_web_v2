@@ -2,7 +2,7 @@
   "name": "SmartLogger",
   "short_name": "SmartLogger",
   "description": "Sistema de monitoramento inteligente para equipamentos industriais",
-  "theme_color": "#121f3affff",
+  "theme_color": "#2563eb",
   "background_color": "#ffffff",
   "display": "standalone",
   "display_override": ["standalone"],

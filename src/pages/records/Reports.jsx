@@ -3781,7 +3781,7 @@ const Reports = () => {
                 Configure o Relatório
               </h3>
               <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-lg`}>
-                Selecione um equipamento e um período de pesquisa para gerar o relatório detalhado
+                Para gerar o relatório detalhado, selecione um equipamento e defina o período desejado acima. Caso tenha dúvidas, consulte o administrador do sistema.
               </p>
             </div>
           </div>

@@ -2211,9 +2211,19 @@ const Main = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {popupData.data.map((item, index) => {
                     let statusColor = '';
-                    if (item.status === 'Crítico') statusColor = 'text-red-700 bg-red-100 border-red-200';
-                    else if (item.status === 'Atenção') statusColor = 'text-orange-700 bg-orange-100 border-orange-200';
-                    else statusColor = 'text-green-700 bg-green-100 border-green-200';
+                    let statusTextColor = '';
+                    if (item.status === 'Crítico') {
+                      statusColor = isDarkMode ? 'border-red-500' : 'bg-red-100 border-red-200';
+                      statusTextColor = isDarkMode ? 'text-red-400' : 'text-red-700';
+                    }
+                    else if (item.status === 'Atenção') {
+                      statusColor = isDarkMode ? 'border-orange-500' : 'bg-orange-100 border-orange-200';
+                      statusTextColor = isDarkMode ? 'text-orange-400' : 'text-orange-700';
+                    }
+                    else {
+                      statusColor = isDarkMode ? 'border-green-500' : 'bg-green-100 border-green-200';
+                      statusTextColor = isDarkMode ? 'text-green-400' : 'text-green-700';
+                    }
                     
                     return (
                       <div key={index} className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50'} rounded-lg p-4 border-2 ${statusColor}`}>
@@ -2224,7 +2234,7 @@ const Main = () => {
                         <div className="space-y-2">
                           <div className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{item.remaining_hours.toFixed(0)}h</div>
                           <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Horas Restantes</div>
-                          <div className={`text-sm font-medium px-2 py-1 rounded-full text-center`}>
+                          <div className={`text-sm font-medium px-2 py-1 rounded-full text-center ${statusTextColor}`}>
                             {item.status}
                           </div>
                         </div>
@@ -2279,22 +2289,22 @@ const Main = () => {
                       
                       if (item.satellites >= 8) { 
                         gpsQuality = 'Excelente'; 
-                        gpsColor = 'text-emerald-600 bg-emerald-100'; 
+                        gpsColor = isDarkMode ? 'text-emerald-400 bg-gray-700' : 'text-emerald-600 bg-emerald-100'; 
                         gpsIcon = '🛰️'; 
                       }
                       else if (item.satellites >= 6) { 
                         gpsQuality = 'Bom'; 
-                        gpsColor = 'text-blue-600 bg-blue-100'; 
+                        gpsColor = isDarkMode ? 'text-blue-400 bg-gray-700' : 'text-blue-600 bg-blue-100'; 
                         gpsIcon = '📡'; 
                       }
                       else if (item.satellites >= 4) { 
                         gpsQuality = 'Regular'; 
-                        gpsColor = 'text-amber-600 bg-amber-100'; 
+                        gpsColor = isDarkMode ? 'text-amber-400 bg-gray-700' : 'text-amber-600 bg-amber-100'; 
                         gpsIcon = '📶'; 
                       }
                       else { 
                         gpsQuality = 'Fraco'; 
-                        gpsColor = 'text-red-600 bg-red-100'; 
+                        gpsColor = isDarkMode ? 'text-red-400 bg-gray-700' : 'text-red-600 bg-red-100'; 
                         gpsIcon = '📵'; 
                       }
                       
@@ -2338,7 +2348,7 @@ const Main = () => {
                             <span className={`font-medium text-sm ${isDarkMode ? 'text-white' : 'text-gray-800'} truncate`}>
                               {item.name}
                             </span>
-                            <span className={`text-xs px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold`}>
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-blue-100 text-blue-700'} font-bold`}>
                               #{index + 1}
                             </span>
                           </div>
@@ -2423,17 +2433,21 @@ const Main = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {popupData.data.map((item, index) => {
                     let statusColor = '';
+                    let statusTextColor = '';
                     let statusIcon = '';
                     if (item.status === 'Crítico') { 
-                      statusColor = 'text-red-700 bg-red-100 border-red-200'; 
+                      statusColor = isDarkMode ? 'border-red-500' : 'bg-red-100 border-red-200'; 
+                      statusTextColor = isDarkMode ? 'text-red-400' : 'text-red-700';
                       statusIcon = '🔥'; 
                     }
                     else if (item.status === 'Atenção') { 
-                      statusColor = 'text-orange-700 bg-orange-100 border-orange-200'; 
+                      statusColor = isDarkMode ? 'border-orange-500' : 'bg-orange-100 border-orange-200'; 
+                      statusTextColor = isDarkMode ? 'text-orange-400' : 'text-orange-700';
                       statusIcon = '⚠️'; 
                     }
                     else { 
-                      statusColor = 'text-green-700 bg-green-100 border-green-200'; 
+                      statusColor = isDarkMode ? 'border-green-500' : 'bg-green-100 border-green-200'; 
+                      statusTextColor = isDarkMode ? 'text-green-400' : 'text-green-700';
                       statusIcon = '✅'; 
                     }
                     
@@ -2450,7 +2464,7 @@ const Main = () => {
                             <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Temperatura</div>
                           </div>
                         </div>
-                        <div className={`text-sm font-medium px-2 py-1 rounded-full text-center`}>
+                        <div className={`text-sm font-medium px-2 py-1 rounded-full text-center ${statusTextColor}`}>
                           {item.status}
                         </div>
                       </div>

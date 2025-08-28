@@ -7,9 +7,40 @@ import { useDevice } from '../../context/DeviceContext';
 import api from '../../services/api';
 import LoadPage from '../../components/LoadPage';
 
+// Hook personalizado para detectar zoom da tela
+const useZoomLevel = () => {
+  const [zoomLevel, setZoomLevel] = useState(1);
+
+  useEffect(() => {
+    const updateZoomLevel = () => {
+      // Detecta zoom através da diferença entre devicePixelRatio e zoom CSS
+      const zoom = window.devicePixelRatio || 1;
+      setZoomLevel(zoom);
+    };
+
+    // Atualiza zoom inicial
+    updateZoomLevel();
+
+    // Listener para mudanças de zoom
+    const mediaQuery = window.matchMedia('(resolution: 1dppx)');
+    mediaQuery.addEventListener('change', updateZoomLevel);
+
+    // Fallback para resize
+    window.addEventListener('resize', updateZoomLevel);
+
+    return () => {
+      mediaQuery.removeEventListener('change', updateZoomLevel);
+      window.removeEventListener('resize', updateZoomLevel);
+    };
+  }, []);
+
+  return zoomLevel;
+};
+
 const Equipments = () => {
   const [equipments, setEquipments] = useState([]);
   const [devices, setDevices] = useState([]);
+  const [maintenances, setMaintenances] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortDirection, setSortDirection] = useState('asc'); // Direção de ordenação
   const [sortBy, setSortBy] = useState('name'); // Coluna de ordenação
@@ -26,104 +57,121 @@ const Equipments = () => {
   const [refreshInterval, setRefreshInterval] = useState(30); // segundos
   const [openDropdownId, setOpenDropdownId] = useState(null); // Estado para controlar dropdown de ações
   const [openSortDropdown, setOpenSortDropdown] = useState(null); // Estado para controlar dropdown de sorting
+  const [tooltip, setTooltip] = useState({ visible: false, content: '', x: 0, y: 0 });
   const { isDarkMode } = useTheme();
   const { isMobile, isTablet, isDesktop, getGridCols, getResponsiveClasses } = useDevice();
+  const zoomLevel = useZoomLevel(); // Hook para detectar zoom
 
   /**
-   * ✅ Buscar Equipamentos
+   * ✅ Buscar Equipamentos com Retry
    */
-  useEffect(() => {
-    const fetchData = async () => {
+  const fetchDataWithRetry = async (retries = 3, delay = 1000) => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
       try {
-        const [equipmentsRes, devicesRes] = await Promise.all([
+        const [equipmentsRes, devicesRes, maintenancesRes] = await Promise.all([
           api.get('/equipments/'),
-          api.get('/devices/')
+          api.get('/devices/'),
+          api.get('/maintenances/')
         ]);
         setEquipments(equipmentsRes.data);
         setDevices(devicesRes.data);
+        setMaintenances(maintenancesRes.data);
         setLoading(false);
+        return; // Sucesso, sair da função
       } catch (error) {
-        console.error('Erro ao buscar dados:', error.message);
-        setLoading(false);
+        console.error(`Tentativa ${attempt} falhou:`, error.message);
 
-        Swal.fire({
-          title: 'Erro ao Carregar Dados',
-          text: error.response?.data?.message || 'Não foi possível carregar os equipamentos. Verifique sua conexão e tente novamente.',
-          icon: 'error',
-          confirmButtonColor: isDarkMode ? '#dc2626' : '#ef4444',
-          background: isDarkMode ? '#111827' : '#ffffff',
-          color: isDarkMode ? '#f9fafb' : '#111827',
-          iconColor: isDarkMode ? '#ef4444' : '#dc2626',
-          width: '420px',
-          padding: '2rem',
-          customClass: {
-            popup: isDarkMode ? 'dark-error-popup' : 'light-error-popup',
-            title: isDarkMode ? 'dark-error-title' : 'light-error-title',
-            htmlContainer: isDarkMode ? 'dark-error-text' : 'light-error-text',
-            confirmButton: 'custom-error-btn'
-          },
-          didOpen: () => {
-            const style = document.createElement('style');
-            style.innerHTML = `
-              .dark-error-popup {
-                border: 2px solid #dc2626 !important;
-                box-shadow: 0 25px 50px -12px rgba(220, 38, 38, 0.5) !important;
-                border-radius: 16px !important;
-                background: linear-gradient(135deg, #111827, #1f2937) !important;
+        if (attempt === retries) {
+          // Última tentativa falhou, mostrar erro
+          setLoading(false);
+
+          // Só mostrar erro se não for uma atualização automática silenciosa
+          if (!autoRefresh || attempt > 1) {
+            Swal.fire({
+              title: 'Erro ao Carregar Dados',
+              text: error.response?.data?.message || 'Não foi possível carregar os equipamentos. Verifique sua conexão e tente novamente.',
+              icon: 'error',
+              confirmButtonColor: isDarkMode ? '#dc2626' : '#ef4444',
+              background: isDarkMode ? '#111827' : '#ffffff',
+              color: isDarkMode ? '#f9fafb' : '#111827',
+              iconColor: isDarkMode ? '#ef4444' : '#dc2626',
+              width: '420px',
+              padding: '2rem',
+              customClass: {
+                popup: isDarkMode ? 'dark-error-popup' : 'light-error-popup',
+                title: isDarkMode ? 'dark-error-title' : 'light-error-title',
+                htmlContainer: isDarkMode ? 'dark-error-text' : 'light-error-text',
+                confirmButton: 'custom-error-btn'
+              },
+              didOpen: () => {
+                const style = document.createElement('style');
+                style.innerHTML = `
+                  .dark-error-popup {
+                    border: 2px solid #dc2626 !important;
+                    box-shadow: 0 25px 50px -12px rgba(220, 38, 38, 0.5) !important;
+                    border-radius: 16px !important;
+                    background: linear-gradient(135deg, #111827, #1f2937) !important;
+                  }
+                  .light-error-popup {
+                    box-shadow: 0 25px 50px -12px rgba(220, 38, 38, 0.3) !important;
+                    border-radius: 16px !important;
+                    border: 2px solid #ef4444 !important;
+                    background: linear-gradient(135deg, #ffffff, #f8fafc) !important;
+                  }
+                  .dark-error-title {
+                    color: #ef4444 !important;
+                    font-size: 1.5rem !important;
+                    font-weight: 700 !important;
+                  }
+                  .light-error-title {
+                    color: #dc2626 !important;
+                    font-size: 1.5rem !important;
+                    font-weight: 700 !important;
+                  }
+                  .dark-error-text {
+                    color: #d1d5db !important;
+                    font-size: 1rem !important;
+                  }
+                  .light-error-text {
+                    color: #4b5563 !important;
+                    font-size: 1rem !important;
+                  }
+                  .custom-error-btn {
+                    background: ${isDarkMode ? 'linear-gradient(135deg, #dc2626, #b91c1c)' : 'linear-gradient(135deg, #ef4444, #dc2626)'} !important;
+                    border: ${isDarkMode ? '2px solid #b91c1c' : '2px solid #dc2626'} !important;
+                    color: #ffffff !important;
+                    box-shadow: 0 8px 20px ${isDarkMode ? 'rgba(220, 38, 38, 0.5)' : 'rgba(239, 68, 68, 0.4)'} !important;
+                    transition: all 0.3s ease !important;
+                    font-weight: 600 !important;
+                    font-size: 1rem !important;
+                    padding: 12px 24px !important;
+                    border-radius: 8px !important;
+                  }
+                  .custom-error-btn:hover {
+                    background: ${isDarkMode ? 'linear-gradient(135deg, #b91c1c, #991b1b)' : 'linear-gradient(135deg, #dc2626, #b91c1c)'} !important;
+                    transform: translateY(-2px) !important;
+                    box-shadow: 0 12px 25px ${isDarkMode ? 'rgba(220, 38, 38, 0.7)' : 'rgba(239, 68, 68, 0.5)'} !important;
+                  }
+                `;
+                document.head.appendChild(style);
               }
-              .light-error-popup {
-                box-shadow: 0 25px 50px -12px rgba(220, 38, 38, 0.3) !important;
-                border-radius: 16px !important;
-                border: 2px solid #ef4444 !important;
-                background: linear-gradient(135deg, #ffffff, #f8fafc) !important;
-              }
-              .dark-error-title {
-                color: #ef4444 !important;
-                font-size: 1.5rem !important;
-                font-weight: 700 !important;
-              }
-              .light-error-title {
-                color: #dc2626 !important;
-                font-size: 1.5rem !important;
-                font-weight: 700 !important;
-              }
-              .dark-error-text {
-                color: #d1d5db !important;
-                font-size: 1rem !important;
-              }
-              .light-error-text {
-                color: #4b5563 !important;
-                font-size: 1rem !important;
-              }
-              .custom-error-btn {
-                background: ${isDarkMode ? 'linear-gradient(135deg, #dc2626, #b91c1c)' : 'linear-gradient(135deg, #ef4444, #dc2626)'} !important;
-                border: ${isDarkMode ? '2px solid #b91c1c' : '2px solid #dc2626'} !important;
-                color: #ffffff !important;
-                box-shadow: 0 8px 20px ${isDarkMode ? 'rgba(220, 38, 38, 0.5)' : 'rgba(239, 68, 68, 0.4)'} !important;
-                transition: all 0.3s ease !important;
-                font-weight: 600 !important;
-                font-size: 1rem !important;
-                padding: 12px 24px !important;
-                border-radius: 8px !important;
-              }
-              .custom-error-btn:hover {
-                background: ${isDarkMode ? 'linear-gradient(135deg, #b91c1c, #991b1b)' : 'linear-gradient(135deg, #dc2626, #b91c1c)'} !important;
-                transform: translateY(-2px) !important;
-                box-shadow: 0 12px 25px ${isDarkMode ? 'rgba(220, 38, 38, 0.7)' : 'rgba(239, 68, 68, 0.5)'} !important;
-              }
-            `;
-            document.head.appendChild(style);
+            });
           }
-        });
+        } else {
+          // Aguardar antes da próxima tentativa
+          await new Promise(resolve => setTimeout(resolve, delay * attempt));
+        }
       }
-    };
+    }
+  };
 
-    fetchData();
+  useEffect(() => {
+    fetchDataWithRetry();
 
     // Atualiza a lista a cada intervalo configurado, apenas se a aba estiver visível e auto-refresh ativo
     const interval = setInterval(() => {
       if (document.visibilityState === 'visible' && autoRefresh) {
-        fetchData();
+        fetchDataWithRetry(2, 500); // Menos tentativas e delay menor para atualizações automáticas
       }
     }, refreshInterval * 1000);
 
@@ -437,7 +485,12 @@ const Equipments = () => {
         eq.min_remaining_hours || 0,
         eq.deviceData?.calculated_temperature || 'N/A',
         eq.deviceData?.speed_gps || 'N/A',
-        getMaintenanceStatus(eq.min_remaining_hours)
+        eq.min_remaining_hours < 0 
+          ? (() => {
+              const overdueMaintenanceNames = getOverdueMaintenanceNames(eq.id);
+              return overdueMaintenanceNames ? `"${overdueMaintenanceNames}"` : getMaintenanceStatus(eq.min_remaining_hours);
+            })()
+          : getMaintenanceStatus(eq.min_remaining_hours)
       ].join(','))
     ].join('\n');
 
@@ -464,6 +517,38 @@ const Equipments = () => {
     if (temp > 90) return 'ALTA';
     if (temp > 60) return 'MÉDIA';
     return 'NORMAL';
+  };
+
+  /**
+   * ✅ Obter informações das manutenções vencidas
+   */
+  const getOverdueMaintenanceInfo = (equipmentId) => {
+    const equipmentMaintenances = maintenances.filter(maintenance => 
+      String(maintenance.equipment) === String(equipmentId) &&
+      maintenance.remaining_hours !== undefined &&
+      maintenance.remaining_hours !== null &&
+      maintenance.remaining_hours < 0 &&
+      maintenance.name
+    );
+
+    if (equipmentMaintenances.length === 0) return null;
+
+    // Ordenar por urgência: mais vencidas primeiro (números mais negativos)
+    const sortedMaintenances = equipmentMaintenances.sort((a, b) => a.remaining_hours - b.remaining_hours);
+
+    const totalOverdue = sortedMaintenances.length;
+    const primaryMaintenance = sortedMaintenances[0].name;
+    const additionalCount = totalOverdue - 1;
+
+    // Criar tooltip com todas as manutenções
+    const allMaintenances = sortedMaintenances.map(m => m.name).join('\n• ');
+
+    return {
+      primary: primaryMaintenance,
+      additionalCount,
+      totalOverdue,
+      tooltip: `• ${allMaintenances}`
+    };
   };
 
   /**
@@ -626,8 +711,54 @@ const Equipments = () => {
     return <LoadPage />;
   }
 
+  // Função para calcular estilos dinâmicos baseados no zoom
+  const getDynamicStyles = () => {
+    // Zoom base (100%) = 1
+    // Ajusta tamanhos baseado no zoom para manter proporções
+    const baseFontSize = Math.max(0.8, Math.min(1.4, 1 / zoomLevel));
+    const basePadding = Math.max(8, Math.min(24, 16 / zoomLevel));
+    const baseSpacing = Math.max(4, Math.min(16, 8 / zoomLevel));
+
+    return {
+      fontSize: `${baseFontSize}rem`,
+      padding: `${basePadding}px`,
+      gap: `${baseSpacing}px`,
+      tableFontSize: zoomLevel > 1.2 ? '0.75rem' : zoomLevel < 0.8 ? '1rem' : '0.875rem',
+      tablePadding: zoomLevel > 1.2 ? '6px 8px' : zoomLevel < 0.8 ? '12px 16px' : '8px 12px',
+      buttonSize: zoomLevel > 1.2 ? '32px' : zoomLevel < 0.8 ? '48px' : '40px',
+      iconSize: zoomLevel > 1.2 ? '16px' : zoomLevel < 0.8 ? '24px' : '20px'
+    };
+  };
+
+  const dynamicStyles = getDynamicStyles();
+
   return (
     <div className={`${isMobile ? 'p-2' : 'p-6'} min-h-screen overflow-x-hidden`}>
+      {/* CSS Dinâmico para Zoom */}
+      <style>{`
+        .dynamic-table {
+          font-size: ${dynamicStyles.tableFontSize} !important;
+        }
+        .dynamic-table th,
+        .dynamic-table td {
+          padding: ${dynamicStyles.tablePadding} !important;
+        }
+        .dynamic-button {
+          width: ${dynamicStyles.buttonSize} !important;
+          height: ${dynamicStyles.buttonSize} !important;
+        }
+        .dynamic-icon {
+          width: ${dynamicStyles.iconSize} !important;
+          height: ${dynamicStyles.iconSize} !important;
+        }
+        .zoom-responsive {
+          font-size: ${dynamicStyles.fontSize} !important;
+          padding: ${dynamicStyles.padding} !important;
+        }
+        .zoom-responsive * {
+          gap: ${dynamicStyles.gap} !important;
+        }
+      `}</style>
       {/* ✅ Barra de Ferramentas */}
       <div className={`mb-${isMobile ? '4' : '6'} ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} ${isMobile ? 'p-2' : 'p-4'} rounded-lg shadow border`} style={!isMobile ? {maxWidth: 'fit-content', marginLeft: 'auto'} : {}}>
         {/* Linha principal: Busca e Ações */}
@@ -681,12 +812,12 @@ const Equipments = () => {
       {/* ✅ Tabela Responsiva */}
       <div className="overflow-x-auto rounded-lg shadow bg-gray-50" style={{ minHeight: '400px' }}>
         <div className="min-w-full bg-white">
-          <table className="min-w-full bg-white text-center">
+          <table className="min-w-full bg-white text-center dynamic-table">
             <thead className="bg-blue-900 text-white">
               <tr>
                 <th className={`${isMobile ? 'py-1 px-1 text-xs' : 'py-3 px-4 text-sm'} font-semibold`}>
                   <div className="flex items-center justify-center">
-                    {isMobile ? 'ID' : 'ID'}
+                    <span>{isMobile ? 'ID' : 'ID'}</span>
                   </div>
                 </th>
                 <th className={`${isMobile ? 'py-1 px-1 text-xs min-w-[80px]' : 'py-3 px-4 text-sm min-w-[120px]'} font-semibold relative`}>
@@ -969,7 +1100,7 @@ const Equipments = () => {
                 {!isMobile && (
                   <th className="py-3 px-4 text-sm font-semibold relative">
                     <div className="flex items-center justify-center gap-2">
-                      <span>Temperatura</span>
+                      <span>Temp.</span>
                       <div className="relative sort-dropdown">
                         <button
                           onClick={() => setOpenSortDropdown(openSortDropdown === 'temperature' ? null : 'temperature')}
@@ -1365,32 +1496,46 @@ const Equipments = () => {
                           'bg-emerald-500'
                           }`}></div>
                         <span className="font-semibold">
-                          {isMobile ? getMaintenanceStatus(equipment.min_remaining_hours).substring(0, 3) : getMaintenanceStatus(equipment.min_remaining_hours)}
+                          {equipment.min_remaining_hours < 0 
+                            ? (() => {
+                                const maintenanceInfo = getOverdueMaintenanceInfo(equipment.id);
+                                if (!maintenanceInfo) {
+                                  return isMobile ? getMaintenanceStatus(equipment.min_remaining_hours).substring(0, 3) : getMaintenanceStatus(equipment.min_remaining_hours);
+                                }
+
+                                const displayText = isMobile 
+                                  ? maintenanceInfo.primary.substring(0, 10) + (maintenanceInfo.primary.length > 10 ? '...' : '')
+                                  : maintenanceInfo.primary;
+
+                                return (
+                                  <div 
+                                    className="relative inline-block"
+                                    onMouseEnter={maintenanceInfo.additionalCount > 0 ? (e) => {
+                                      const rect = e.currentTarget.getBoundingClientRect();
+                                      setTooltip({
+                                        visible: true,
+                                        content: maintenanceInfo.tooltip,
+                                        x: rect.left + rect.width / 2,
+                                        y: rect.top - 10
+                                      });
+                                    } : undefined}
+                                    onMouseLeave={maintenanceInfo.additionalCount > 0 ? () => setTooltip({ visible: false, content: '', x: 0, y: 0 }) : undefined}
+                                  >
+                                    <span>
+                                      {displayText}
+                                      {maintenanceInfo.additionalCount > 0 && (
+                                        <span className="ml-1 text-xs bg-red-500 text-white px-1 py-0.5 rounded-full">
+                                          +{maintenanceInfo.additionalCount}
+                                        </span>
+                                      )}
+                                    </span>
+                                  </div>
+                                );
+                              })()
+                            : (isMobile ? getMaintenanceStatus(equipment.min_remaining_hours).substring(0, 3) : getMaintenanceStatus(equipment.min_remaining_hours))
+                          }
                         </span>
                       </div>
-
-                      {/* Status de Temperatura (sempre visível) */}
-                      {equipment.deviceData?.calculated_temperature !== undefined && equipment.deviceData.calculated_temperature <= 150 && (
-                        <div className={`inline-flex items-center justify-center ${isMobile ? 'px-1.5 py-0.5 text-xs' : 'px-2 py-1 text-xs'} rounded-md font-medium border transition-all duration-200 ${equipment.deviceData.calculated_temperature > 90 
-                          ? 'bg-red-50 text-red-700 border-red-200' :
-                          equipment.deviceData.calculated_temperature > 60 
-                          ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                          'bg-blue-50 text-blue-700 border-blue-200'
-                          }`}>
-                          <svg className={`w-2.5 h-2.5 mr-1 ${equipment.deviceData.calculated_temperature > 90 
-                            ? 'text-red-500' :
-                            equipment.deviceData.calculated_temperature > 60 
-                            ? 'text-orange-500' :
-                            'text-blue-500'
-                            }`} fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 2a1 1 0 011 1v5.586l2.707-2.707a1 1 0 011.414 1.414L11.414 10l3.707 3.707a1 1 0 01-1.414 1.414L11 12.414V18a1 1 0 11-2 0v-5.586L6.293 15.121a1 1 0 01-1.414-1.414L8.586 10 4.879 6.293a1 1 0 011.414-1.414L9 7.586V3a1 1 0 011-1z" clipRule="evenodd" />
-                          </svg>
-                          <span className="font-semibold">
-                            {isMobile ? `${Math.round(equipment.deviceData.calculated_temperature)}°` :
-                              `${equipment.deviceData.calculated_temperature.toFixed(1)}°C`}
-                          </span>
-                        </div>
-                      )}
                     </div>
                   </td>
 
@@ -1459,7 +1604,7 @@ const Equipments = () => {
                       </div>
                     ) : (
                       /* Ações para Desktop */
-                      <div className="flex justify-center items-center gap-3">
+                      <div className="flex justify-center items-center gap-2">
                         <style>{`
                           .action-anim {
                             transition: box-shadow 0.18s, filter 0.18s, transform 0.22s cubic-bezier(.4,1.6,.6,1), opacity 0.22s;
@@ -1472,44 +1617,44 @@ const Equipments = () => {
                         `}</style>
                         <Link
                           to={`/dashboard/equipments/${equipment.id}/edit`}
-                          className="group p-2 rounded-md text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors action-anim"
+                          className="group p-1.5 rounded-md text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors action-anim dynamic-button"
                           aria-label="Editar Equipamento"
                           title="Editar Equipamento"
                         >
-                          <svg className="w-5 h-5 group-hover:drop-shadow-md transition-all duration-200" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                          <svg className="dynamic-icon group-hover:drop-shadow-md transition-all duration-200" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                             <path d="M16.862 3.487a2.25 2.25 0 1 1 3.182 3.182l-12.12 12.12a2 2 0 0 1-.878.513l-3.06.817.817-3.06a2 2 0 0 1 .513-.878l12.12-12.12z" />
                             <path d="M15 6l3 3" />
                           </svg>
                         </Link>
                         <Link
                           to={`/dashboard/devices/${equipment.device}`}
-                          className="group p-2 rounded-md text-green-600 hover:text-green-700 hover:bg-green-50 transition-colors action-anim"
+                          className="group p-1.5 rounded-md text-green-600 hover:text-green-700 hover:bg-green-50 transition-colors action-anim dynamic-button"
                           aria-label="Visualizar Detalhes do Device"
                           title="Ver Detalhes do Device"
                         >
-                          <svg className="w-5 h-5 group-hover:drop-shadow-md transition-all duration-200" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                          <svg className="dynamic-icon group-hover:drop-shadow-md transition-all duration-200" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                             <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
                             <circle cx="12" cy="12" r="3.5" />
                           </svg>
                         </Link>
                         <Link
                           to={`/dashboard/maintenance/${equipment.id}`}
-                          className="group p-2 rounded-md text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 transition-colors action-anim"
+                          className="group p-1.5 rounded-md text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 transition-colors action-anim dynamic-button"
                           aria-label="Manutenção"
                           title="Gerenciar Manutenção"
                         >
-                          <svg className="w-5 h-5 group-hover:drop-shadow-md transition-all duration-200" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                          <svg className="dynamic-icon group-hover:drop-shadow-md transition-all duration-200" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                             <circle cx="12" cy="12" r="3" />
                             <path d="M19.43 12.98c.04-.32.07-.65.07-.98s-.03-.66-.07-.98l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.6-.22l-2.49 1a7.03 7.03 0 0 0-1.7-.98l-.38-2.65A.5.5 0 0 0 14 2h-4a.5.5 0 0 0-.5.42l-.38 2.65a7.03 7.03 0 0 0-1.7.98l-2.49-1a.5.5 0 0 0-.6.22l-2 3.46a.5.5 0 0 0 .12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46a.5.5 0 0 0 .6.22l2.49-1c.53.38 1.1.72 1.7.98l.38 2.65A.5.5 0 0 0 10 22h4a.5.5 0 0 0 .5-.42l.38-2.65a7.03 7.03 0 0 0 1.7-.98l2.49 1a.5.5 0 0 0 .6-.22l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.65z" />
                           </svg>
                         </Link>
                         <button
                           onClick={() => openDeleteModal(equipment.id)}
-                          className="group p-2 rounded-md text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors action-anim"
+                          className="group p-2 rounded-md text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors action-anim dynamic-button"
                           aria-label="Deletar Equipamento"
                           title="Deletar Equipamento"
                         >
-                          <svg className="w-5 h-5 group-hover:drop-shadow-md transition-all duration-200" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                          <svg className="dynamic-icon group-hover:drop-shadow-md transition-all duration-200" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                             <path d="M3 6h18" />
                             <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                             <rect x="5" y="6" width="14" height="14" rx="2" />
@@ -1771,6 +1916,16 @@ const Equipments = () => {
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Custom Tooltip */}
+      {tooltip.visible && (
+        <div 
+          className={`fixed z-50 ${isDarkMode ? 'bg-gray-900 text-white border border-gray-700' : 'bg-white text-gray-900 border border-gray-300'} text-xs rounded-lg px-3 py-2 shadow-lg pointer-events-none max-w-xs backdrop-blur-sm`}
+          style={{ left: tooltip.x, top: tooltip.y, transform: 'translateX(-50%) translateY(-100%)' }}
+        >
+          <div className="whitespace-pre-line font-medium leading-normal">{tooltip.content}</div>
         </div>
       )}
     </div>
