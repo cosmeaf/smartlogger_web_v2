@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:frontend": "vite --mode development",
-    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "bash scripts/dev-frontend.sh",
+    "dev:frontend:simple": "vite --mode development",
+    "dev:backend": "bash scripts/dev-backend.sh",
+    "dev:backend:simple": "cd backend && npm run dev",
     "build": "vite build --mode production",
     "build:dev": "vite build --mode development",
     "preview": "vite preview --mode production",
