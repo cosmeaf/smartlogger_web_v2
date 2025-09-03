@@ -54,219 +54,99 @@ const InputStateIcon = ({ inputState }) => {
     <div style={{ 
       display: 'flex', 
       flexDirection: 'column', 
-      gap: '12px', 
-      minWidth: '320px',
-      background: colors.cardBg,
-      border: `1px solid ${colors.border}`,
-      borderRadius: '16px',
-      padding: '16px',
-      boxShadow: `0 4px 12px ${colors.shadow}`,
+      gap: '3px',
+      minWidth: '200px',
+      fontSize: '14px',
+      color: isDarkMode ? '#f9fafb' : '#111827'
     }}>
-      {/* Header com informação binária */}
+      {/* Header simples */}
       <div style={{ 
         display: 'flex', 
         alignItems: 'center', 
-        justifyContent: 'space-between',
-        marginBottom: '8px'
+        gap: '8px',
+        marginBottom: '6px',
+        paddingBottom: '3px',
+        borderBottom: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`
       }}>
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '8px' 
+        <span style={{ 
+          fontSize: '13px', 
+          fontWeight: '600', 
+          color: isDarkMode ? '#60a5fa' : '#2563eb'
         }}>
-          <div style={{
-            padding: '6px 12px',
-            backgroundColor: isDarkMode ? '#0ea5e9' : '#0284c7',
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
-              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span style={{ 
-              fontSize: '12px', 
-              fontWeight: '600', 
-              color: 'white'
-            }}>
-              ENTRADAS
-            </span>
-          </div>
-        </div>
-        <div style={{ 
+          ENTRADAS
+        </span>
+        <span style={{ 
           fontSize: '11px', 
-          fontWeight: '500', 
-          color: colors.labelInactive,
+          fontWeight: '400', 
+          color: isDarkMode ? '#d1d5db' : '#6b7280',
           fontFamily: 'monospace',
-          backgroundColor: colors.bitBg,
-          padding: '4px 8px',
-          borderRadius: '6px',
-          letterSpacing: '1px'
+          letterSpacing: '0.5px'
         }}>
-          {binaryString}
-        </div>
+          ({binaryString})
+        </span>
       </div>
 
-      {/* Grid de bits */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', 
-        gap: '8px' 
-      }}>
+      {/* Lista simples */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
         {bits.map((bitInfo) => (
           <div
             key={bitInfo.index}
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
-              padding: '10px 12px',
-              borderRadius: '12px',
-              backgroundColor: bitInfo.bit 
-                ? (bitInfo.isIgnition ? colors.ignitionBg : colors.activeBg)
-                : colors.bitBg,
-              border: `2px solid ${
-                bitInfo.bit 
-                  ? (bitInfo.isIgnition ? colors.ignition : colors.on) 
-                  : colors.border
-              }`,
-              transition: 'all 0.3s ease',
-              cursor: 'default',
-              boxShadow: bitInfo.bit 
-                ? `0 0 8px ${bitInfo.isIgnition ? colors.ignitionGlowShadow : colors.glow}` 
-                : 'none',
+              gap: '8px',
+              padding: '3px 0',
+              fontSize: '13px',
+              lineHeight: '1.3'
             }}
           >
-            {/* LED indicador */}
-            <div
+            {/* Status simples */}
+            <span
               style={{
-                width: '16px',
-                height: '16px',
+                width: '10px',
+                height: '10px',
                 borderRadius: '50%',
                 backgroundColor: bitInfo.bit 
-                  ? (bitInfo.isIgnition ? colors.ignition : colors.on) 
-                  : colors.off,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '9px',
-                color: 'white',
-                fontWeight: 'bold',
-                boxShadow: bitInfo.bit 
-                  ? `0 0 12px ${bitInfo.isIgnition ? colors.ignitionGlow : colors.onGlow}` 
-                  : 'none',
-                position: 'relative',
+                  ? (bitInfo.isIgnition ? '#f59e0b' : '#10b981') 
+                  : isDarkMode ? '#6b7280' : '#9ca3af',
+                flexShrink: 0
+              }}
+            />
+            
+            {/* Nome da entrada */}
+            <span
+              style={{
+                color: bitInfo.bit 
+                  ? (isDarkMode ? '#f9fafb' : '#111827')
+                  : (isDarkMode ? '#d1d5db' : '#6b7280'),
+                fontWeight: bitInfo.bit ? '500' : '400',
+                flex: 1
               }}
             >
-              {bitInfo.bit}
-              {/* Efeito de brilho para bits ativos */}
-              {bitInfo.bit && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    backgroundColor: bitInfo.isIgnition ? colors.ignition : colors.on,
-                    opacity: '0.3',
-                    animation: 'pulse 2s infinite',
-                  }}
-                />
-              )}
-            </div>
+              {bitInfo.label}
+            </span>
 
-            {/* Label e status */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div
-                style={{
-                  fontSize: '12px',
-                  color: bitInfo.bit ? colors.label : colors.labelInactive,
-                  fontWeight: bitInfo.bit ? '600' : '500',
-                  marginBottom: '2px',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {bitInfo.label}
-              </div>
-              <div
-                style={{
-                  fontSize: '10px',
-                  color: bitInfo.bit 
-                    ? (bitInfo.isIgnition ? colors.ignition : colors.on) 
-                    : colors.labelInactive,
-                  fontWeight: '500',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px'
-                }}
-              >
-                {bitInfo.bit ? 'ATIVO' : 'INATIVO'}
-              </div>
-            </div>
+            {/* Status texto */}
+            <span
+              style={{
+                fontSize: '11px',
+                color: bitInfo.bit 
+                  ? (bitInfo.isIgnition ? '#f59e0b' : '#10b981')
+                  : (isDarkMode ? '#9ca3af' : '#9ca3af'),
+                fontWeight: '500',
+                textTransform: 'uppercase'
+              }}
+            >
+              {bitInfo.bit ? 'ON' : 'OFF'}
+            </span>
 
-            {/* Ícone especial para ignição */}
+            {/* Ícone ignição */}
             {bitInfo.isIgnition && bitInfo.bit && (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path 
-                  d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" 
-                  fill={colors.ignition}
-                  style={{
-                    filter: `drop-shadow(0 0 4px ${colors.ignitionGlow})`
-                  }}
-                />
-              </svg>
+              <span style={{ fontSize: '10px', color: '#f59e0b' }}>🔥</span>
             )}
           </div>
         ))}
       </div>
-
-      {/* Resumo das entradas ativas */}
-      {bits.filter(b => b.bit).length > 0 && (
-        <div style={{ 
-          marginTop: '8px', 
-          padding: '10px 12px', 
-          backgroundColor: colors.activeBg,
-          borderRadius: '10px', 
-          border: `1px solid ${colors.on}33`,
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            marginBottom: '4px'
-          }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill={colors.on}>
-              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span style={{ 
-              fontSize: '11px', 
-              fontWeight: '600', 
-              color: colors.on 
-            }}>
-              ENTRADAS ATIVAS ({bits.filter(b => b.bit).length})
-            </span>
-          </div>
-          <div style={{ 
-            fontSize: '10px', 
-            color: colors.label,
-            lineHeight: '1.4'
-          }}>
-            {bits.filter(b => b.bit).map(b => b.label).join(' • ')}
-          </div>
-        </div>
-      )}
-
-      {/* CSS para animação */}
-      <style>
-        {`
-          @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.3; }
-            50% { transform: scale(1.1); opacity: 0.1; }
-          }
-        `}
-      </style>
     </div>
   );
 };
@@ -331,242 +211,105 @@ const OutputStateIcon = ({ outputState }) => {
     <div style={{ 
       display: 'flex', 
       flexDirection: 'column', 
-      gap: '12px', 
-      minWidth: '320px',
-      background: colors.cardBg,
-      border: `1px solid ${colors.border}`,
-      borderRadius: '16px',
-      padding: '16px',
-      boxShadow: `0 4px 12px ${colors.shadow}`,
+      gap: '3px',
+      minWidth: '200px',
+      fontSize: '14px',
+      color: isDarkMode ? '#f9fafb' : '#111827'
     }}>
-      {/* Header com informação binária */}
+      {/* Header simples */}
       <div style={{ 
         display: 'flex', 
         alignItems: 'center', 
-        justifyContent: 'space-between',
-        marginBottom: '8px'
+        gap: '8px',
+        marginBottom: '6px',
+        paddingBottom: '3px',
+        borderBottom: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`
       }}>
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '8px' 
+        <span style={{ 
+          fontSize: '13px', 
+          fontWeight: '600', 
+          color: isDarkMode ? '#60a5fa' : '#2563eb'
         }}>
-          <div style={{
-            padding: '6px 12px',
-            backgroundColor: isDarkMode ? '#3b82f6' : '#2563eb',
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-            </svg>
-            <span style={{ 
-              fontSize: '12px', 
-              fontWeight: '600', 
-              color: 'white'
-            }}>
-              SAÍDAS
-            </span>
-          </div>
-        </div>
-        <div style={{ 
+          SAÍDAS
+        </span>
+        <span style={{ 
           fontSize: '11px', 
-          fontWeight: '500', 
-          color: colors.labelInactive,
+          fontWeight: '400', 
+          color: isDarkMode ? '#d1d5db' : '#6b7280',
           fontFamily: 'monospace',
-          backgroundColor: colors.bitBg,
-          padding: '4px 8px',
-          borderRadius: '6px',
-          letterSpacing: '1px'
+          letterSpacing: '0.5px'
         }}>
-          {binaryString}
-        </div>
+          ({binaryString})
+        </span>
       </div>
 
-      {/* Grid de bits */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', 
-        gap: '8px' 
-      }}>
+      {/* Lista simples */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
         {bits.map((bitInfo) => (
           <div
             key={bitInfo.index}
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
-              padding: '10px 12px',
-              borderRadius: '12px',
-              backgroundColor: bitInfo.bit && bitInfo.isOutput 
-                ? colors.activeBg
-                : bitInfo.isReserved 
-                  ? colors.reservedBg
-                  : colors.bitBg,
-              border: `2px solid ${
-                bitInfo.isOutput
-                  ? (bitInfo.bit ? colors.on : colors.border)
-                  : colors.reserved
-              }`,
-              transition: 'all 0.3s ease',
-              cursor: 'default',
-              boxShadow: bitInfo.bit && bitInfo.isOutput
-                ? `0 0 8px ${colors.glow}` 
-                : bitInfo.isReserved && bitInfo.bit
-                  ? `0 0 4px ${colors.reservedGlowShadow}`
-                  : 'none',
-              opacity: bitInfo.isReserved ? 0.6 : 1,
+              gap: '8px',
+              padding: '3px 0',
+              fontSize: '13px',
+              lineHeight: '1.3',
+              opacity: bitInfo.isReserved ? 0.6 : 1
             }}
           >
-            {/* LED indicador */}
-            <div
+            {/* Status simples */}
+            <span
               style={{
-                width: '16px',
-                height: '16px',
+                width: '10px',
+                height: '10px',
                 borderRadius: '50%',
                 backgroundColor: bitInfo.isOutput
-                  ? (bitInfo.bit ? colors.on : colors.off)
-                  : bitInfo.bit ? colors.reserved : colors.off,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '9px',
-                color: 'white',
-                fontWeight: 'bold',
-                boxShadow: bitInfo.bit && bitInfo.isOutput
-                  ? `0 0 12px ${colors.onGlow}` 
-                  : bitInfo.isReserved && bitInfo.bit
-                    ? `0 0 6px ${colors.reservedGlow}`
-                    : 'none',
-                position: 'relative',
+                  ? (bitInfo.bit ? '#3b82f6' : (isDarkMode ? '#6b7280' : '#9ca3af'))
+                  : (bitInfo.bit ? '#6b7280' : (isDarkMode ? '#4b5563' : '#9ca3af')),
+                flexShrink: 0
+              }}
+            />
+            
+            {/* Nome da saída */}
+            <span
+              style={{
+                color: bitInfo.isOutput
+                  ? (bitInfo.bit 
+                      ? (isDarkMode ? '#f9fafb' : '#111827')
+                      : (isDarkMode ? '#d1d5db' : '#6b7280'))
+                  : (isDarkMode ? '#9ca3af' : '#9ca3af'),
+                fontWeight: bitInfo.isOutput && bitInfo.bit ? '500' : '400',
+                flex: 1
               }}
             >
-              {bitInfo.bit}
-              {/* Efeito de brilho para bits ativos */}
-              {bitInfo.bit && bitInfo.isOutput && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    backgroundColor: colors.on,
-                    opacity: '0.3',
-                    animation: 'pulse 2s infinite',
-                  }}
-                />
-              )}
-            </div>
+              {bitInfo.label}
+            </span>
 
-            {/* Label e status */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div
-                style={{
-                  fontSize: '12px',
-                  color: bitInfo.isOutput
-                    ? (bitInfo.bit ? colors.label : colors.labelInactive)
-                    : colors.reserved,
-                  fontWeight: bitInfo.isOutput && bitInfo.bit ? '600' : '500',
-                  marginBottom: '2px',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {bitInfo.label}
-              </div>
-              <div
-                style={{
-                  fontSize: '10px',
-                  color: bitInfo.isOutput
-                    ? (bitInfo.bit ? colors.on : colors.labelInactive)
-                    : colors.reserved,
-                  fontWeight: '500',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px'
-                }}
-              >
-                {bitInfo.isReserved 
-                  ? 'RESERVADO'
-                  : bitInfo.bit ? 'HABILITADA' : 'DESABILITADA'
-                }
-              </div>
-            </div>
+            {/* Status texto */}
+            <span
+              style={{
+                fontSize: '11px',
+                color: bitInfo.isOutput
+                  ? (bitInfo.bit ? '#3b82f6' : (isDarkMode ? '#9ca3af' : '#9ca3af'))
+                  : (isDarkMode ? '#9ca3af' : '#9ca3af'),
+                fontWeight: '500',
+                textTransform: 'uppercase'
+              }}
+            >
+              {bitInfo.isReserved 
+                ? 'RES'
+                : bitInfo.bit ? 'ON' : 'OFF'
+              }
+            </span>
 
-            {/* Ícone especial para saídas ativas */}
+            {/* Ícone para saídas ativas */}
             {bitInfo.isOutput && bitInfo.bit && (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path 
-                  d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" 
-                  fill={colors.on}
-                  style={{
-                    filter: `drop-shadow(0 0 4px ${colors.onGlow})`
-                  }}
-                />
-              </svg>
-            )}
-
-            {/* Ícone para reservados */}
-            {bitInfo.isReserved && (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path 
-                  d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" 
-                  fill={colors.reserved}
-                  opacity="0.6"
-                />
-              </svg>
+              <span style={{ fontSize: '10px', color: '#3b82f6' }}>⚡</span>
             )}
           </div>
         ))}
       </div>
-
-      {/* Resumo das saídas ativas */}
-      {bits.filter(b => b.isOutput && b.bit).length > 0 && (
-        <div style={{ 
-          marginTop: '8px', 
-          padding: '10px 12px', 
-          backgroundColor: colors.activeBg,
-          borderRadius: '10px', 
-          border: `1px solid ${colors.on}33`,
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            marginBottom: '4px'
-          }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill={colors.on}>
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-            </svg>
-            <span style={{ 
-              fontSize: '11px', 
-              fontWeight: '600', 
-              color: colors.on 
-            }}>
-              SAÍDAS HABILITADAS ({bits.filter(b => b.isOutput && b.bit).length})
-            </span>
-          </div>
-          <div style={{ 
-            fontSize: '10px', 
-            color: colors.label,
-            lineHeight: '1.4'
-          }}>
-            {bits.filter(b => b.isOutput && b.bit).map(b => b.label).join(' • ')}
-          </div>
-        </div>
-      )}
-
-      {/* CSS para animação */}
-      <style>
-        {`
-          @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.3; }
-            50% { transform: scale(1.1); opacity: 0.1; }
-          }
-        `}
-      </style>
     </div>
   );
 };
