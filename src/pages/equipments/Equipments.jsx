@@ -58,6 +58,7 @@ const Equipments = () => {
   const [openDropdownId, setOpenDropdownId] = useState(null); // Estado para controlar dropdown de ações
   const [openSortDropdown, setOpenSortDropdown] = useState(null); // Estado para controlar dropdown de sorting
   const [tooltip, setTooltip] = useState({ visible: false, content: '', x: 0, y: 0 });
+  const [tooltipTimeoutId, setTooltipTimeoutId] = useState(null);
   const { isDarkMode } = useTheme();
   const { isMobile, isTablet, isDesktop, getGridCols, getResponsiveClasses } = useDevice();
   const zoomLevel = useZoomLevel(); // Hook para detectar zoom
@@ -194,6 +195,51 @@ const Equipments = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [openDropdownId, openSortDropdown]);
+
+  // Limpar timeout do tooltip quando o componente for desmontado
+  useEffect(() => {
+    return () => {
+      if (tooltipTimeoutId) {
+        clearTimeout(tooltipTimeoutId);
+      }
+    };
+  }, [tooltipTimeoutId]);
+
+  // Funções para controlar o tooltip de forma mais precisa
+  const showTooltip = (content, x, y) => {
+    // Limpar timeout anterior se existir
+    if (tooltipTimeoutId) {
+      clearTimeout(tooltipTimeoutId);
+    }
+    
+    setTooltip({
+      visible: true,
+      content,
+      x,
+      y
+    });
+  };
+
+  const hideTooltip = () => {
+    // Limpar timeout anterior se existir
+    if (tooltipTimeoutId) {
+      clearTimeout(tooltipTimeoutId);
+    }
+    
+    // Usar timeout para dar uma pequena tolerância
+    const timeoutId = setTimeout(() => {
+      setTooltip({ visible: false, content: '', x: 0, y: 0 });
+    }, 150);
+    
+    setTooltipTimeoutId(timeoutId);
+  };
+
+  const cancelTooltipHide = () => {
+    if (tooltipTimeoutId) {
+      clearTimeout(tooltipTimeoutId);
+      setTooltipTimeoutId(null);
+    }
+  };
 
   /**
    * ✅ Modal de Exclusão
@@ -473,25 +519,35 @@ const Equipments = () => {
    * ✅ Exportar Dados
    */
   const exportToCSV = () => {
-    const headers = ['ID', 'Nome', 'Atualizado', 'Local', 'Horas Trabalhadas', 'Horas Restantes', 'Temperatura', 'Velocidade GPS', 'Status'];
+    const headers = ['ID', 'Nome', 'Atualizado', 'Local', 'Horas Trabalhadas', 'Horas Restantes', 'Temperatura', 'Velocidade GPS', 'Status', 'Peças Vencidas', 'Peças em Atenção'];
     const csvData = [
       headers.join(','),
-      ...filteredEquipments.map(eq => [
-        eq.device || 'N/A',
-        `"${eq.name}"`,
-        eq.deviceData?.updated_at ? new Date(eq.deviceData.updated_at).toLocaleString('pt-BR') : 'N/A',
-        `"${eq.model || 'N/A'}"`,
-        eq.worked_hours || 0,
-        eq.min_remaining_hours || 0,
-        eq.deviceData?.calculated_temperature || 'N/A',
-        eq.deviceData?.speed_gps || 'N/A',
-        eq.min_remaining_hours < 0 
-          ? (() => {
-              const overdueMaintenanceNames = getOverdueMaintenanceNames(eq.id);
-              return overdueMaintenanceNames ? `"${overdueMaintenanceNames}"` : getMaintenanceStatus(eq.min_remaining_hours);
-            })()
-          : getMaintenanceStatus(eq.min_remaining_hours)
-      ].join(','))
+      ...filteredEquipments.map(eq => {
+        const overdueInfo = getOverdueMaintenanceInfo(eq.id);
+        const attentionInfo = getAttentionMaintenanceInfo(eq.id);
+        
+        const overdueParts = overdueInfo 
+          ? `"${overdueInfo.sortedMaintenances.map(m => `${m.name} (${Math.abs(m.remaining_hours)}h vencidas)`).join('; ')}"` 
+          : '';
+        
+        const attentionParts = attentionInfo 
+          ? `"${attentionInfo.sortedMaintenances.map(m => `${m.name} (${Math.round(m.remaining_hours)}h restantes)`).join('; ')}"` 
+          : '';
+
+        return [
+          eq.device || 'N/A',
+          `"${eq.name}"`,
+          eq.deviceData?.updated_at ? new Date(eq.deviceData.updated_at).toLocaleString('pt-BR') : 'N/A',
+          `"${eq.model || 'N/A'}"`,
+          eq.worked_hours || 0,
+          eq.min_remaining_hours || 0,
+          eq.deviceData?.calculated_temperature || 'N/A',
+          eq.deviceData?.speed_gps || 'N/A',
+          getMaintenanceStatus(eq.min_remaining_hours),
+          overdueParts,
+          attentionParts
+        ].join(',');
+      })
     ].join('\n');
 
     const blob = new Blob([csvData], { type: 'text/csv' });
@@ -547,8 +603,203 @@ const Equipments = () => {
       primary: primaryMaintenance,
       additionalCount,
       totalOverdue,
-      tooltip: `• ${allMaintenances}`
+      tooltip: `• ${allMaintenances}`,
+      sortedMaintenances
     };
+  };
+
+  /**
+   * ✅ Obter informações de manutenções próximas do vencimento (atenção)
+   */
+  const getAttentionMaintenanceInfo = (equipmentId) => {
+    const equipmentMaintenances = maintenances.filter(maintenance => 
+      String(maintenance.equipment) === String(equipmentId) &&
+      maintenance.remaining_hours !== undefined &&
+      maintenance.remaining_hours !== null &&
+      maintenance.remaining_hours >= 0 &&
+      maintenance.remaining_hours < 100 &&
+      maintenance.name
+    );
+
+    if (equipmentMaintenances.length === 0) return null;
+
+    // Ordenar por urgência: menor número de horas restantes primeiro
+    const sortedMaintenances = equipmentMaintenances.sort((a, b) => a.remaining_hours - b.remaining_hours);
+
+    const totalAttention = sortedMaintenances.length;
+    const primaryMaintenance = sortedMaintenances[0].name;
+    const additionalCount = totalAttention - 1;
+
+    // Criar tooltip com todas as manutenções
+    const allMaintenances = sortedMaintenances.map(m => `${m.name} (${Math.round(m.remaining_hours)}h)`).join('\n• ');
+
+    return {
+      primary: primaryMaintenance,
+      additionalCount,
+      totalAttention,
+      tooltip: `• ${allMaintenances}`,
+      sortedMaintenances,
+      minHours: sortedMaintenances[0].remaining_hours
+    };
+  };
+
+  /**
+   * ✅ Componente de Status Minimalista
+   */
+  const StatusComponent = ({ equipment }) => {
+    const remaining = equipment.min_remaining_hours;
+    const status = getMaintenanceStatus(remaining);
+    
+    if (status === 'URGENTE') {
+      const maintenanceInfo = getOverdueMaintenanceInfo(equipment.id);
+      
+      if (!maintenanceInfo) {
+        return (
+          <div className="text-center">
+            <div className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700 border border-red-200 cursor-pointer`}
+              onMouseEnter={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const tooltipContent = `Manutenção vencida há ${Math.abs(remaining)} horas`;
+                
+                showTooltip(
+                  tooltipContent,
+                  rect.left + rect.width / 2,
+                  rect.top - 10
+                );
+              }}
+              onMouseLeave={hideTooltip}
+            >
+              <div className="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5"></div>
+              <span>Manutenção vencida</span>
+            </div>
+          </div>
+        );
+      }
+
+      const displayText = isMobile 
+        ? maintenanceInfo.primary.substring(0, 12) + (maintenanceInfo.primary.length > 12 ? '...' : '')
+        : maintenanceInfo.primary.substring(0, 18) + (maintenanceInfo.primary.length > 18 ? '...' : '');
+
+      return (
+        <div className="text-center">
+          <div 
+            className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700 border border-red-200 cursor-pointer`}
+            onMouseEnter={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              const tooltipContent = maintenanceInfo.additionalCount > 0 || maintenanceInfo.totalOverdue > 1
+                ? `Manutenções vencidas (${maintenanceInfo.totalOverdue}):\n\n${maintenanceInfo.sortedMaintenances.map((m, index) => 
+                    `${index + 1}. ${m.name} - ${Math.abs(m.remaining_hours)}h vencidas`
+                  ).join('\n')}`
+                : `${maintenanceInfo.primary}\nVencida há ${Math.abs(maintenanceInfo.sortedMaintenances[0].remaining_hours)}h`;
+              
+              showTooltip(
+                tooltipContent,
+                rect.left + rect.width / 2,
+                rect.top - 10
+              );
+            }}
+            onMouseLeave={hideTooltip}
+          >
+            <div className="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5"></div>
+            <span className="flex items-center gap-1">
+              {displayText}
+              {maintenanceInfo.additionalCount > 0 && (
+                <span className="ml-1 text-xs bg-red-500 text-white px-1 rounded">
+                  +{maintenanceInfo.additionalCount}
+                </span>
+              )}
+            </span>
+          </div>
+        </div>
+      );
+    }
+    
+    if (status === 'ATENÇÃO') {
+      const maintenanceInfo = getAttentionMaintenanceInfo(equipment.id);
+      
+      if (!maintenanceInfo) {
+        return (
+          <div className="text-center">
+            <div className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700 border border-yellow-200 cursor-pointer`}
+              onMouseEnter={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const tooltipContent = `Próxima manutenção\nFaltam ${Math.round(remaining)}h para vencer`;
+                
+                showTooltip(
+                  tooltipContent,
+                  rect.left + rect.width / 2,
+                  rect.top - 10
+                );
+              }}
+              onMouseLeave={hideTooltip}
+            >
+              <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 mr-1.5"></div>
+              <span>Próxima manutenção</span>
+            </div>
+          </div>
+        );
+      }
+
+      const displayText = isMobile 
+        ? maintenanceInfo.primary.substring(0, 12) + (maintenanceInfo.primary.length > 12 ? '...' : '')
+        : maintenanceInfo.primary.substring(0, 18) + (maintenanceInfo.primary.length > 18 ? '...' : '');
+
+      return (
+        <div className="text-center">
+          <div 
+            className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700 border border-yellow-200 cursor-pointer`}
+            onMouseEnter={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              const tooltipContent = maintenanceInfo.additionalCount > 0 || maintenanceInfo.totalAttention > 1
+                ? `Próximas manutenções (${maintenanceInfo.totalAttention}):\n\n${maintenanceInfo.sortedMaintenances.map((m, index) => 
+                    `${index + 1}. ${m.name}\n   ${Math.round(m.remaining_hours)}h restantes`
+                  ).join('\n\n')}`
+                : `${maintenanceInfo.primary}\nFaltam ${Math.round(maintenanceInfo.minHours)}h para vencer`;
+              
+              showTooltip(
+                tooltipContent,
+                rect.left + rect.width / 2,
+                rect.top - 10
+              );
+            }}
+            onMouseLeave={hideTooltip}
+          >
+            <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 mr-1.5"></div>
+            <span className="flex items-center gap-1">
+              {displayText}
+              {maintenanceInfo.additionalCount > 0 && (
+                <span className="ml-1 text-xs bg-yellow-500 text-white px-1 rounded">
+                  +{maintenanceInfo.additionalCount}
+                </span>
+              )}
+            </span>
+          </div>
+        </div>
+      );
+    }
+    
+    // Status OK
+    return (
+      <div className="text-center">
+        <div 
+          className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700 border border-green-200 cursor-pointer`}
+          onMouseEnter={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const tooltipContent = `Próxima manutenção programada\n${Math.round(remaining)}h restantes`;
+            
+            showTooltip(
+              tooltipContent,
+              rect.left + rect.width / 2,
+              rect.top - 10
+            );
+          }}
+          onMouseLeave={hideTooltip}
+        >
+          <div className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></div>
+          <span>OK</span>
+        </div>
+      </div>
+    );
   };
 
   /**
@@ -573,12 +824,24 @@ const Equipments = () => {
     const matchesSearch = equipment.name.toLowerCase().includes(searchLower) ||
       equipment.model.toLowerCase().includes(searchLower);
 
-    // Filtro de status de manutenção
+    // Filtro de status de manutenção melhorado
     const maintenanceStatus = getMaintenanceStatus(equipment.min_remaining_hours);
-    const matchesMaintenance = maintenanceFilter === 'all' ||
-      (maintenanceFilter === 'urgent' && maintenanceStatus === 'URGENTE') ||
-      (maintenanceFilter === 'attention' && maintenanceStatus === 'ATENÇÃO') ||
-      (maintenanceFilter === 'ok' && maintenanceStatus === 'OK');
+    let matchesMaintenance = false;
+    
+    if (maintenanceFilter === 'all') {
+      matchesMaintenance = true;
+    } else if (maintenanceFilter === 'urgent') {
+      matchesMaintenance = maintenanceStatus === 'URGENTE';
+    } else if (maintenanceFilter === 'attention') {
+      // Incluir equipamentos com status ATENÇÃO OU que têm peças individuais precisando de atenção
+      const hasAttentionParts = getAttentionMaintenanceInfo(equipment.id) !== null;
+      matchesMaintenance = maintenanceStatus === 'ATENÇÃO' || hasAttentionParts;
+    } else if (maintenanceFilter === 'ok') {
+      // OK apenas quando não há peças vencidas nem próximas do vencimento
+      const hasOverdueParts = getOverdueMaintenanceInfo(equipment.id) !== null;
+      const hasAttentionParts = getAttentionMaintenanceInfo(equipment.id) !== null;
+      matchesMaintenance = maintenanceStatus === 'OK' && !hasOverdueParts && !hasAttentionParts;
+    }
 
     // Filtro de temperatura
     const tempStatus = getTemperatureStatus(equipment.deviceData?.calculated_temperature);
@@ -1265,7 +1528,7 @@ const Equipments = () => {
                                   }`}
                               >
                                 <div className="w-3 h-3 rounded-full bg-amber-500 mr-2"></div>
-                                ATENÇÃO
+                                ATENÇÃO (Peças + Equipamentos)
                               </button>
                               <button
                                 onClick={() => {
@@ -1481,62 +1744,7 @@ const Equipments = () => {
                     </td>
                   )}
                   <td className={`${isMobile ? 'py-1 px-1' : 'py-3 px-4'}`}>
-                    <div className={`flex ${isMobile ? 'flex-col gap-1' : 'flex-col gap-1.5'} items-center justify-center`}>
-                      {/* Status de Manutenção */}
-                      <div className={`inline-flex items-center justify-center ${isMobile ? 'px-1.5 py-0.5 text-xs' : 'px-2 py-1 text-xs'} rounded-md font-medium border transition-all duration-200 ${getMaintenanceStatus(equipment.min_remaining_hours) === 'URGENTE' 
-                        ? 'bg-red-50 text-red-700 border-red-200' :
-                        getMaintenanceStatus(equipment.min_remaining_hours) === 'ATENÇÃO' 
-                        ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                        'bg-emerald-50 text-emerald-700 border-emerald-200'
-                        }`}>
-                        <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${getMaintenanceStatus(equipment.min_remaining_hours) === 'URGENTE' 
-                          ? 'bg-red-500' :
-                          getMaintenanceStatus(equipment.min_remaining_hours) === 'ATENÇÃO' 
-                          ? 'bg-amber-500' :
-                          'bg-emerald-500'
-                          }`}></div>
-                        <span className="font-semibold">
-                          {equipment.min_remaining_hours < 0 
-                            ? (() => {
-                                const maintenanceInfo = getOverdueMaintenanceInfo(equipment.id);
-                                if (!maintenanceInfo) {
-                                  return isMobile ? getMaintenanceStatus(equipment.min_remaining_hours).substring(0, 3) : getMaintenanceStatus(equipment.min_remaining_hours);
-                                }
-
-                                const displayText = isMobile 
-                                  ? maintenanceInfo.primary.substring(0, 10) + (maintenanceInfo.primary.length > 10 ? '...' : '')
-                                  : maintenanceInfo.primary;
-
-                                return (
-                                  <div 
-                                    className="relative inline-block"
-                                    onMouseEnter={maintenanceInfo.additionalCount > 0 ? (e) => {
-                                      const rect = e.currentTarget.getBoundingClientRect();
-                                      setTooltip({
-                                        visible: true,
-                                        content: maintenanceInfo.tooltip,
-                                        x: rect.left + rect.width / 2,
-                                        y: rect.top - 10
-                                      });
-                                    } : undefined}
-                                    onMouseLeave={maintenanceInfo.additionalCount > 0 ? () => setTooltip({ visible: false, content: '', x: 0, y: 0 }) : undefined}
-                                  >
-                                    <span>
-                                      {displayText}
-                                      {maintenanceInfo.additionalCount > 0 && (
-                                        <span className="ml-1 text-xs bg-red-500 text-white px-1 py-0.5 rounded-full">
-                                          +{maintenanceInfo.additionalCount}
-                                        </span>
-                                      )}
-                                    </span>
-                                  </div>
-                                );
-                              })()
-                            : (isMobile ? getMaintenanceStatus(equipment.min_remaining_hours).substring(0, 3) : getMaintenanceStatus(equipment.min_remaining_hours))
-                          }
-                        </span>
-                      </div>
-                    </div>
+                    <StatusComponent equipment={equipment} />
                   </td>
 
                   <td className={`${isMobile ? 'py-2 px-2' : 'py-3 px-4'}`}>
