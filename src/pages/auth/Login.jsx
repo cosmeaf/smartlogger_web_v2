@@ -3,9 +3,16 @@ import React, { useContext, useState } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useDevice } from '../../context/DeviceContext';
+import { useThemeTransitions } from '../../hooks/useThemeTransitions';
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import '../../styles/transitions.css';
+
+// Componentes de melhorias
+import ValidatedEmailField from '../../components/auth/ValidatedEmailField';
+import BiometricAuth from '../../components/auth/BiometricAuth';
+import MicroInteractions, { GlobalAnimations } from '../../components/auth/MicroInteractions';
 import {
   Avatar,
   Box,
@@ -20,18 +27,30 @@ import {
   Paper
 } from '@mui/material';
 
-import { Visibility, VisibilityOff, Email, Lock, Apartment, DarkMode, LightMode } from '@mui/icons-material';
+import { Visibility, VisibilityOff, Lock, Apartment, DarkMode, LightMode } from '@mui/icons-material';
 
 
 const Login = () => {
   const { login, error, showLogoutSuccess, clearLogoutSuccess } = useContext(AuthContext);
   const { isDarkMode, toggleTheme } = useTheme();
   const { isMobile, isTablet, screenWidth } = useDevice();
+  
+  // 🎭 Hook para transições suaves de tema
+  const {
+    isTransitioning,
+    iconRef,
+    buttonRef,
+    handleThemeChange
+  } = useThemeTransitions(toggleTheme, isDarkMode);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false);
+  const [loginError, setLoginError] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
   const navigate = useNavigate();
 
   // Efeito para mostrar notificação de logout bem-sucedido
@@ -53,10 +72,26 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setLoginError(false);
+    setFormErrors({});
+    
+    // Validações básicas
+    const errors = {};
+    if (!email.trim()) errors.email = 'E-mail é obrigatório';
+    if (!password.trim()) errors.password = 'Senha é obrigatória';
+    
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      setLoginError(true);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       console.log('Iniciando processo de login...');
       const success = await login(email, password, rememberMe);
       if (success) {
+        setLoginSuccess(true);
         toast.success('Login realizado com sucesso!', {
           position: "top-right",
           autoClose: 3000,
@@ -66,9 +101,14 @@ const Login = () => {
           draggable: true,
           theme: isDarkMode ? "dark" : "light",
         });
-        console.log('Redirecionando para dashboard...');
-        navigate('/dashboard');
+        
+        // Pequeno delay para mostrar animação de sucesso
+        setTimeout(() => {
+          console.log('Redirecionando para dashboard...');
+          navigate('/dashboard');
+        }, 1500);
       } else {
+        setLoginError(true);
         console.log('Login falhou, permanecendo na página');
         toast.error('Falha no login. Por favor, verifique suas credenciais.', {
           position: "top-right",
@@ -81,6 +121,7 @@ const Login = () => {
         });
       }
     } catch (err) {
+      setLoginError(true);
       console.error('Erro durante o processo de login:', err);
       toast.error('Erro ao tentar fazer login. Tente novamente.', {
         position: "top-right",
@@ -92,11 +133,45 @@ const Login = () => {
         theme: isDarkMode ? "dark" : "light",
       });
     } finally {
-      setIsLoading(false);
+      setTimeout(() => {
+        setIsLoading(false);
+        setLoginSuccess(false);
+      }, loginSuccess ? 1500 : 0);
     }
   };
 
+  const handleBiometricSuccess = (result) => {
+    setLoginSuccess(true);
+    toast.success('Login biométrico realizado com sucesso!', {
+      position: "top-right",
+      autoClose: 3000,
+      theme: isDarkMode ? "dark" : "light",
+    });
+    
+    setTimeout(() => {
+      navigate('/dashboard');
+    }, 1500);
+  };
+
+  const handleBiometricError = (error) => {
+    toast.error(`Erro na biometria: ${error}`, {
+      position: "top-right",
+      autoClose: 4000,
+      theme: isDarkMode ? "dark" : "light",
+    });
+  };
+
   return (
+    <>
+      {/* Animações CSS globais */}
+      <GlobalAnimations />
+      
+      {/* Animações de feedback */}
+      <MicroInteractions.SuccessAnimation 
+        show={loginSuccess} 
+        message="Login realizado com sucesso!" 
+      />
+      
     <Box sx={{ 
       minHeight: '100vh', 
       bgcolor: isDarkMode ? 'grey.900' : 'grey.100', 
@@ -107,9 +182,14 @@ const Login = () => {
       justifyContent: 'center',
       px: isMobile ? 2 : 0
     }}>
-      {/* Theme Toggle Button */}
+      {/* Partículas flutuantes */}
+      <MicroInteractions.FloatingParticles isDarkMode={isDarkMode} count={15} />
+      {/* Theme Toggle Button with Smooth Animations */}
       <IconButton
-        onClick={toggleTheme}
+        ref={buttonRef}
+        onClick={handleThemeChange}
+        disabled={isTransitioning}
+        className="theme-button"
         sx={{
           position: 'fixed',
           top: isMobile ? 16 : 24,
@@ -118,12 +198,41 @@ const Login = () => {
           bgcolor: isDarkMode ? 'grey.800' : 'background.paper',
           border: 1,
           borderColor: isDarkMode ? 'grey.700' : 'grey.300',
+          width: isMobile ? 48 : 56,
+          height: isMobile ? 48 : 56,
+          boxShadow: isDarkMode 
+            ? '0 8px 32px rgba(0, 0, 0, 0.3)' 
+            : '0 8px 32px rgba(0, 0, 0, 0.1)',
+          transition: 'all 0.2s ease-out',
           '&:hover': {
             bgcolor: isDarkMode ? 'grey.700' : 'grey.100',
+            transform: 'scale(1.05)',
+            boxShadow: isDarkMode 
+              ? '0 12px 40px rgba(0, 0, 0, 0.4)' 
+              : '0 12px 40px rgba(0, 0, 0, 0.15)',
+          },
+          '&:active': {
+            transform: 'scale(0.95)',
+          },
+          '&.Mui-disabled': {
+            bgcolor: isDarkMode ? 'grey.800' : 'background.paper',
+            opacity: 0.7,
           }
         }}
       >
-        {isDarkMode ? <LightMode /> : <DarkMode />}
+        <Box
+          ref={iconRef}
+          className="theme-icon"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: isDarkMode ? 'warning.main' : 'primary.main',
+            fontSize: isMobile ? '1.2rem' : '1.5rem',
+          }}
+        >
+          {isDarkMode ? <LightMode /> : <DarkMode />}
+        </Box>
       </IconButton>
 
       {/* Ondas SVG animadas no rodapé */}
@@ -273,149 +382,117 @@ const Login = () => {
         )}
 
         <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
-          <TextField
-            margin={isMobile ? "dense" : "normal"}
-            required
-            fullWidth
-            id="email"
-            label="E-mail"
-            autoComplete="email"
-            autoFocus={!isMobile} // Evita zoom no iOS
+          {/* Email com validação em tempo real */}
+          <ValidatedEmailField
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
+            isDarkMode={isDarkMode}
+            disabled={isLoading}
             size={isMobile ? "small" : "medium"}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start" sx={{
-                  // Corrige o fundo dos ícones no autocomplete
-                  '& .MuiSvgIcon-root': {
-                    color: isDarkMode ? 'grey.400' : 'action.active',
-                    fontSize: isMobile ? '1rem' : '1.25rem',
-                    zIndex: 1,
-                    position: 'relative'
-                  }
-                }}>
-                  <Email />
-                </InputAdornment>
-              ),
-              style: {
-                fontSize: isMobile ? '16px' : '14px' // Evita zoom no iOS
-              }
-            }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                bgcolor: isDarkMode ? 'grey.700' : 'background.paper',
-              },
-              '& .MuiInputLabel-root': {
-                color: isDarkMode ? 'grey.300' : 'text.secondary',
-              },
-              '& .MuiInputBase-input': {
-                color: isDarkMode ? 'grey.100' : 'text.primary',
-                // Corrige o fundo claro do autocomplete do Chrome no tema escuro
-                '&:-webkit-autofill': {
-                  WebkitBoxShadow: isDarkMode ? '0 0 0 1000px #424242 inset' : '0 0 0 1000px #fff inset',
-                  WebkitTextFillColor: isDarkMode ? '#f5f5f5 !important' : '#000 !important',
-                  transition: 'background-color 5000s ease-in-out 0s',
-                },
-                '&:-webkit-autofill:hover': {
-                  WebkitBoxShadow: isDarkMode ? '0 0 0 1000px #424242 inset' : '0 0 0 1000px #fff inset',
-                  WebkitTextFillColor: isDarkMode ? '#f5f5f5 !important' : '#000 !important',
-                },
-                '&:-webkit-autofill:focus': {
-                  WebkitBoxShadow: isDarkMode ? '0 0 0 1000px #424242 inset' : '0 0 0 1000px #fff inset',
-                  WebkitTextFillColor: isDarkMode ? '#f5f5f5 !important' : '#000 !important',
-                },
-                '&:-webkit-autofill:active': {
-                  WebkitBoxShadow: isDarkMode ? '0 0 0 1000px #424242 inset' : '0 0 0 1000px #fff inset',
-                  WebkitTextFillColor: isDarkMode ? '#f5f5f5 !important' : '#000 !important',
-                }
-              }
-            }}
+            margin={isMobile ? "dense" : "normal"}
+            autoFocus={!isMobile}
           />
 
-          <TextField
-            margin={isMobile ? "dense" : "normal"}
-            required
-            fullWidth
-            name="password"
-            label="Senha"
-            type={showPassword ? 'text' : 'password'}
-            autoComplete="current-password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            size={isMobile ? "small" : "medium"}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start" sx={{
-                  // Corrige o fundo dos ícones no autocomplete
-                  '& .MuiSvgIcon-root': {
-                    color: isDarkMode ? 'grey.400' : 'action.active',
-                    fontSize: isMobile ? '1rem' : '1.25rem',
-                    zIndex: 1,
-                    position: 'relative'
-                  }
-                }}>
-                  <Lock />
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <InputAdornment position="end" sx={{
-                  // Corrige o fundo dos ícones no autocomplete
-                  '& .MuiIconButton-root': {
-                    color: isDarkMode ? 'grey.400' : 'action.active',
-                    zIndex: 1,
-                    position: 'relative',
-                    bgcolor: 'transparent !important'
-                  },
-                  '& .MuiSvgIcon-root': {
-                    color: isDarkMode ? 'grey.400' : 'action.active',
-                    zIndex: 1,
-                    position: 'relative'
-                  }
-                }}>
-                  <IconButton
-                    onClick={() => setShowPassword(prev => !prev)}
-                    edge="end"
-                    size={isMobile ? "small" : "medium"}
-                  >
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-              style: {
-                fontSize: isMobile ? '16px' : '14px'
-              }
-            }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                bgcolor: isDarkMode ? 'grey.700' : 'background.paper',
-              },
-              '& .MuiInputLabel-root': {
-                color: isDarkMode ? 'grey.300' : 'text.secondary',
-              },
-              '& .MuiInputBase-input': {
-                color: isDarkMode ? 'grey.100' : 'text.primary',
-                // Corrige o fundo claro do autocomplete do Chrome no tema escuro
-                '&:-webkit-autofill': {
-                  WebkitBoxShadow: isDarkMode ? '0 0 0 1000px #424242 inset' : '0 0 0 1000px #fff inset',
-                  WebkitTextFillColor: isDarkMode ? '#f5f5f5 !important' : '#000 !important',
-                  transition: 'background-color 5000s ease-in-out 0s',
-                },
-                '&:-webkit-autofill:hover': {
-                  WebkitBoxShadow: isDarkMode ? '0 0 0 1000px #424242 inset' : '0 0 0 1000px #fff inset',
-                  WebkitTextFillColor: isDarkMode ? '#f5f5f5 !important' : '#000 !important',
-                },
-                '&:-webkit-autofill:focus': {
-                  WebkitBoxShadow: isDarkMode ? '0 0 0 1000px #424242 inset' : '0 0 0 1000px #fff inset',
-                  WebkitTextFillColor: isDarkMode ? '#f5f5f5 !important' : '#000 !important',
-                },
-                '&:-webkit-autofill:active': {
-                  WebkitBoxShadow: isDarkMode ? '0 0 0 1000px #424242 inset' : '0 0 0 1000px #fff inset',
-                  WebkitTextFillColor: isDarkMode ? '#f5f5f5 !important' : '#000 !important',
+          {/* Senha com animação de shake para erro */}
+          <MicroInteractions.ShakeAnimation trigger={loginError && !password}>
+            <TextField
+              margin={isMobile ? "dense" : "normal"}
+              required
+              fullWidth
+              name="password"
+              label="Senha"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              size={isMobile ? "small" : "medium"}
+              error={formErrors.password}
+              helperText={formErrors.password}
+              disabled={isLoading}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start" sx={{
+                    '& .MuiSvgIcon-root': {
+                      color: formErrors.password 
+                        ? '#f44336'
+                        : isDarkMode ? 'grey.400' : 'action.active',
+                      fontSize: isMobile ? '1rem' : '1.25rem',
+                      zIndex: 1,
+                      position: 'relative',
+                      transition: 'color 0.3s ease'
+                    }
+                  }}>
+                    <Lock />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end" sx={{
+                    '& .MuiIconButton-root': {
+                      color: isDarkMode ? 'grey.400' : 'action.active',
+                      zIndex: 1,
+                      position: 'relative',
+                      bgcolor: 'transparent !important'
+                    },
+                    '& .MuiSvgIcon-root': {
+                      color: isDarkMode ? 'grey.400' : 'action.active',
+                      zIndex: 1,
+                      position: 'relative'
+                    }
+                  }}>
+                    <IconButton
+                      onClick={() => setShowPassword(prev => !prev)}
+                      edge="end"
+                      size={isMobile ? "small" : "medium"}
+                      disabled={isLoading}
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+                style: {
+                  fontSize: isMobile ? '16px' : '14px'
                 }
-              }
-            }}
-          />
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: isDarkMode ? 'grey.700' : 'background.paper',
+                  transition: 'all 0.3s ease',
+                  '&.Mui-error': {
+                    '& fieldset': {
+                      borderColor: '#f44336',
+                      boxShadow: '0 0 0 2px rgba(244, 67, 54, 0.2)',
+                    }
+                  }
+                },
+                '& .MuiInputLabel-root': {
+                  color: formErrors.password 
+                    ? '#f44336'
+                    : isDarkMode ? 'grey.300' : 'text.secondary',
+                },
+                '& .MuiInputBase-input': {
+                  color: isDarkMode ? 'grey.100' : 'text.primary',
+                  '&:-webkit-autofill': {
+                    WebkitBoxShadow: isDarkMode ? '0 0 0 1000px #616161 inset !important' : '0 0 0 1000px #fff inset !important',
+                    WebkitTextFillColor: isDarkMode ? '#f5f5f5 !important' : '#000 !important',
+                    transition: 'background-color 5000s ease-in-out 0s !important',
+                    borderRadius: 'inherit !important',
+                  },
+                  '&:-webkit-autofill:hover': {
+                    WebkitBoxShadow: isDarkMode ? '0 0 0 1000px #616161 inset !important' : '0 0 0 1000px #fff inset !important',
+                    WebkitTextFillColor: isDarkMode ? '#f5f5f5 !important' : '#000 !important',
+                  },
+                  '&:-webkit-autofill:focus': {
+                    WebkitBoxShadow: isDarkMode ? '0 0 0 1000px #616161 inset !important' : '0 0 0 1000px #fff inset !important',
+                    WebkitTextFillColor: isDarkMode ? '#f5f5f5 !important' : '#000 !important',
+                  },
+                  '&:-webkit-autofill:active': {
+                    WebkitBoxShadow: isDarkMode ? '0 0 0 1000px #616161 inset !important' : '0 0 0 1000px #fff inset !important',
+                    WebkitTextFillColor: isDarkMode ? '#f5f5f5 !important' : '#000 !important',
+                  }
+                }
+              }}
+            />
+          </MicroInteractions.ShakeAnimation>
 
           <Box sx={{ 
             mt: isMobile ? 0.5 : 1, 
@@ -461,20 +538,29 @@ const Login = () => {
             </Link>
           </Box>
 
+          {/* Botão de login padrão do Material-UI */}
           <Button
             type="submit"
             fullWidth
             variant="contained"
+            disabled={isLoading}
             sx={{ 
               py: isMobile ? 1.2 : 1.5, 
               mb: isMobile ? 1 : 2,
               fontSize: isMobile ? '15px' : '14px'
             }}
-            disabled={isLoading}
             size={isMobile ? "medium" : "medium"}
           >
             {isLoading ? 'Carregando...' : 'Entrar'}
           </Button>
+
+          {/* Autenticação Biométrica */}
+          <BiometricAuth
+            onSuccess={handleBiometricSuccess}
+            onError={handleBiometricError}
+            isDarkMode={isDarkMode}
+            disabled={isLoading}
+          />
 
           <Typography variant="body2" align="center" 
             sx={{ 
@@ -534,6 +620,7 @@ const Login = () => {
         theme={isDarkMode ? "dark" : "light"}
       />
     </Box>
+    </>
   );
 };
 

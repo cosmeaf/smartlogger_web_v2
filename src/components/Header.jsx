@@ -2,14 +2,24 @@ import React, { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useDevice } from '../context/DeviceContext';
+import { useThemeTransitions } from '../hooks/useThemeTransitions';
 import { FaUser, FaSignOutAlt, FaMoon, FaSun } from 'react-icons/fa';
 import NotificationBell from './NotificationBell';
 import Swal from 'sweetalert2';
+import '../styles/transitions.css';
 
 const Header = () => {
   const { logout, user } = useContext(AuthContext);
   const { isDarkMode, toggleTheme } = useTheme();
   const { isMobile } = useDevice();
+  
+  // 🎭 Hook para transições suaves de tema
+  const {
+    isTransitioning,
+    iconRef,
+    buttonRef,
+    handleThemeChange
+  } = useThemeTransitions(toggleTheme, isDarkMode);
 
   const handleLogout = () => {
     Swal.fire({
@@ -166,7 +176,7 @@ const Header = () => {
   };
 
   return (
-    <header className={`bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 shadow-lg border-b border-gray-200 dark:border-gray-700 transition-colors duration-300 ${
+    <header className={`header-transition bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 shadow-lg border-b border-gray-200 dark:border-gray-700 transition-colors duration-300 ${
       isMobile ? 'py-2.5 px-3.5' : 'py-3 px-7'
     }`}>
       <div className={`flex ${isMobile ? 'flex-col space-y-1' : 'justify-between items-center'}`}>
@@ -208,11 +218,15 @@ const Header = () => {
 
               {/* Botão de tema */}
               <button
-                onClick={toggleTheme}
-                className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                ref={buttonRef}
+                onClick={handleThemeChange}
+                disabled={isTransitioning}
+                className="theme-button p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 disabled:opacity-50"
                 title={isDarkMode ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
               >
-                {isDarkMode ? <FaSun className="text-sm" /> : <FaMoon className="text-sm" />}
+                <span ref={iconRef} className="theme-icon">
+                  {isDarkMode ? <FaSun className="text-sm" /> : <FaMoon className="text-sm" />}
+                </span>
               </button>
 
               {/* Botão de logout compacto */}
@@ -235,11 +249,15 @@ const Header = () => {
 
             {/* Botão de tema */}
             <button
-              onClick={toggleTheme}
-              className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+              ref={!isMobile ? buttonRef : undefined}
+              onClick={handleThemeChange}
+              disabled={isTransitioning}
+              className="theme-button p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 disabled:opacity-50"
               title={isDarkMode ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
             >
-              {isDarkMode ? <FaSun className="text-lg" /> : <FaMoon className="text-lg" />}
+              <span ref={!isMobile ? iconRef : undefined} className="theme-icon">
+                {isDarkMode ? <FaSun className="text-lg" /> : <FaMoon className="text-lg" />}
+              </span>
             </button>
 
             {/* Separador */}

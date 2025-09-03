@@ -1,0 +1,254 @@
+/* ===================================
+   🎭 SMOOTH THEME TRANSITIONS - OPTIMIZED
+   =================================== */
+
+/* Transições específicas para elementos que precisam - PERFORMANCE OPTIMIZED */
+.theme-transition,
+[data-theme-transition] {
+  transition: 
+    background-color 0.25s ease-out,
+    color 0.25s ease-out,
+    border-color 0.25s ease-out;
+}
+
+/* Transições rápidas para elementos interativos */
+button, 
+a, 
+input, 
+select, 
+textarea {
+  transition: 
+    background-color 0.15s ease-out,
+    color 0.15s ease-out,
+    border-color 0.15s ease-out,
+    opacity 0.15s ease-out;
+}
+
+/* Exceções - elementos que não devem ter transição automática */
+*[data-no-transition],
+.no-transition,
+input[type="range"],
+.loading-spinner,
+video,
+canvas,
+iframe {
+  transition: none !important;
+}
+
+/* ===================================
+   🌊 THEME WAVE EFFECT - OPTIMIZED
+   =================================== */
+
+/* Container para o efeito de onda - GPU optimized */
+.theme-wave-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+  will-change: transform;
+  transform: translateZ(0); /* Force GPU layer */
+}
+
+/* Onda de mudança de tema - Performance optimized */
+.theme-wave {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0) translateZ(0); /* GPU acceleration */
+  opacity: 0.6; /* Reduzido para melhor performance */
+  pointer-events: none;
+  will-change: transform, opacity;
+  transition: transform 0.4s ease-out, opacity 0.4s ease-out; /* Simplificado */
+}
+
+.theme-wave.active {
+  transform: scale(2.5) translateZ(0); /* Menor escala = melhor performance */
+  opacity: 0;
+}
+
+/* Cores da onda simplificadas */
+.theme-wave.to-dark {
+  background: rgba(31, 41, 55, 0.3); /* Cor sólida ao invés de gradient */
+}
+
+.theme-wave.to-light {
+  background: rgba(248, 250, 252, 0.4); /* Cor sólida ao invés de gradient */
+}
+
+/* ===================================
+   🎯 THEME BUTTON ANIMATIONS - OPTIMIZED
+   =================================== */
+
+/* Animação do botão de tema - GPU optimized */
+.theme-button {
+  position: relative;
+  overflow: hidden;
+  will-change: transform;
+  transform: translateZ(0); /* GPU layer */
+  transition: transform 0.15s ease-out;
+}
+
+.theme-button:hover {
+  transform: scale(1.03) translateZ(0); /* Menor escala */
+}
+
+.theme-button:active {
+  transform: scale(0.97) translateZ(0);
+}
+
+/* Ícone do tema com rotação otimizada */
+.theme-icon {
+  will-change: transform;
+  transform: translateZ(0);
+  transition: transform 0.3s ease-out; /* Mais rápido */
+  display: inline-block;
+}
+
+.theme-icon.rotating {
+  transform: rotate(180deg) translateZ(0); /* Menos rotação = melhor performance */
+}
+
+/* Efeito ripple simplificado */
+.theme-button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2); /* Menos opacidade */
+  transform: translate(-50%, -50%) translateZ(0);
+  transition: width 0.2s ease-out, height 0.2s ease-out; /* Mais rápido */
+  will-change: width, height;
+}
+
+.theme-button.ripple::after {
+  width: 60px; /* Menor tamanho */
+  height: 60px;
+}
+
+/* ===================================
+   ✨ COMPONENT SPECIFIC TRANSITIONS - OPTIMIZED
+   =================================== */
+
+/* Header transitions */
+.header-transition {
+  transition: background-color 0.25s ease-out;
+}
+
+/* Sidebar transitions */
+.sidebar-transition {
+  transition: background-color 0.25s ease-out, border-color 0.25s ease-out;
+}
+
+/* Cards e modais */
+.card-transition {
+  transition: background-color 0.2s ease-out, border-color 0.2s ease-out;
+}
+
+/* Links e botões */
+.link-transition {
+  transition: color 0.15s ease-out, background-color 0.15s ease-out;
+}
+
+/* ===================================
+   🌟 LOADING STATES - OPTIMIZED
+   =================================== */
+
+/* Estado de carregamento durante mudança de tema */
+.theme-loading {
+  position: relative;
+}
+
+.theme-loading::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.05); /* Simplificado */
+  opacity: 0;
+  animation: pulse 0.3s ease-out; /* Mais rápido */
+  will-change: opacity;
+  transform: translateZ(0);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+/* ===================================
+   📱 MOBILE OPTIMIZATIONS - ENHANCED
+   =================================== */
+
+/* Reduzir transições em dispositivos com movimento reduzido */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.05s !important;
+    animation-duration: 0.05s !important;
+  }
+  
+  .theme-wave,
+  .theme-icon.rotating {
+    display: none;
+  }
+}
+
+/* Otimizações para mobile */
+@media (max-width: 768px) {
+  .theme-wave {
+    transition-duration: 0.3s; /* Ainda mais rápido */
+  }
+  
+  .theme-icon {
+    transition-duration: 0.2s;
+  }
+  
+  .theme-button:hover {
+    transform: scale(1.01) translateZ(0); /* Menos movimento em mobile */
+  }
+}
+
+/* Otimizações para dispositivos com baixo FPS */
+@media (max-width: 480px) {
+  .theme-wave {
+    display: none; /* Remove wave effect em telas muito pequenas */
+  }
+}
+
+/* ===================================
+   🎨 ACCESSIBILITY - OPTIMIZED
+   =================================== */
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .theme-wave {
+    opacity: 0.8;
+  }
+}
+
+/* Focus states com transições rápidas */
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  transition: outline-color 0.1s ease-out;
+}
+
+/* Performance mode class - pode ser adicionada via JS */
+.performance-mode * {
+  transition: none !important;
+  animation: none !important;
+}
+
+.performance-mode .theme-wave {
+  display: none !important;
+}
