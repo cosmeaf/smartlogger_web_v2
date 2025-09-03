@@ -15,6 +15,8 @@ const Maintenance = () => {
   const [resetLogs, setResetLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [equipmentName, setEquipmentName] = useState('');
+  const [editingObs, setEditingObs] = useState(null);
+  const [obsValue, setObsValue] = useState('');
   // Buscar nome do equipamento pelo id
   const fetchEquipmentName = async () => {
     try {
@@ -303,6 +305,59 @@ const Maintenance = () => {
     });
   };
 
+  const handleEditObs = (maintenance) => {
+    setEditingObs(maintenance);
+    setObsValue(maintenance.obs || '');
+  };
+
+  const handleSaveObs = async () => {
+    try {
+      await apiService.patch(`/maintenances/${editingObs.id}/`, {
+        obs: obsValue
+      });
+      
+      // Atualiza o estado local
+      const updatedRecords = maintenanceRecords.map((maintenance) =>
+        maintenance.id === editingObs.id
+          ? { ...maintenance, obs: obsValue }
+          : maintenance
+      );
+      setMaintenanceRecords(updatedRecords);
+      
+      // Fecha o modal
+      setEditingObs(null);
+      setObsValue('');
+      
+      // Mostra notificação de sucesso
+      toast.success('Observação atualizada com sucesso!', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: isDarkMode ? "dark" : "light"
+      });
+      
+    } catch (error) {
+      console.error('Erro ao atualizar observação:', error.message);
+      toast.error('Erro ao atualizar observação. Tente novamente.', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: isDarkMode ? "dark" : "light"
+      });
+    }
+  };
+
+  const handleCancelEditObs = () => {
+    setEditingObs(null);
+    setObsValue('');
+  };
+
   if (loading) {
     return <LoadPage />;
   }
@@ -400,6 +455,12 @@ const Maintenance = () => {
                   <th className={`text-left py-3 px-4 font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} hidden sm:table-cell`}>
                     Horas Restantes
                   </th>
+                  <th className={`text-left py-3 px-4 font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} hidden lg:table-cell`}>
+                    <div className="flex items-center gap-2">
+                      <FaFileAlt className="text-xs" />
+                      Observações
+                    </div>
+                  </th>
                   <th className={`text-right py-3 px-4 font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Ações
                   </th>
@@ -408,7 +469,7 @@ const Maintenance = () => {
               <tbody className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 {maintenanceRecords.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="py-8 px-4 text-center">
+                    <td colSpan="8" className="py-8 px-4 text-center">
                       <div className="flex flex-col items-center gap-3">
                         <FaWrench className={`text-3xl ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`} />
                         <p className={`text-lg ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -430,7 +491,7 @@ const Maintenance = () => {
                   </tr>
                 ) : (
                   maintenanceRecords.map((maintenance) => (
-                    <tr key={maintenance.id} className={`border-b ${
+                    <tr key={maintenance.id} className={`border-b group ${
                       isDarkMode 
                         ? 'border-gray-700 hover:bg-gray-750' 
                         : 'border-gray-200 hover:bg-gray-50'
@@ -447,6 +508,27 @@ const Maintenance = () => {
                             </div>
                             <div className="text-xs">
                               Restante: {maintenance.remaining_hours}h
+                            </div>
+                            <div className="flex items-center gap-2 text-xs mt-2">
+                              <span className="font-medium">Obs:</span>
+                              <span 
+                                className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded flex-1"
+                                title="Toque duplo para editar"
+                                onDoubleClick={() => handleEditObs(maintenance)}
+                              >
+                                {maintenance.obs || 'N/A'}
+                              </span>
+                              <button
+                                onClick={() => handleEditObs(maintenance)}
+                                className={`p-1 rounded text-xs ${
+                                  isDarkMode 
+                                    ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
+                                    : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                                }`}
+                                title="Editar observação"
+                              >
+                                <FaPencilAlt />
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -497,6 +579,30 @@ const Maintenance = () => {
                         }`}>
                           {maintenance.remaining_hours}h
                         </span>
+                      </td>
+                      
+                      {/* Observações - oculto no mobile e tablet */}
+                      <td className="py-3 px-4 hidden lg:table-cell">
+                        <div className="flex items-center gap-2">
+                          <span 
+                            className="text-sm max-w-xs truncate block cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded transition-colors" 
+                            title={maintenance.obs || 'Clique duplo para editar'}
+                            onDoubleClick={() => handleEditObs(maintenance)}
+                          >
+                            {maintenance.obs || 'N/A'}
+                          </span>
+                          <button
+                            onClick={() => handleEditObs(maintenance)}
+                            className={`p-1 rounded transition-all duration-200 ${
+                              isDarkMode 
+                                ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
+                                : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                            } opacity-0 group-hover:opacity-100`}
+                            title="Editar observação"
+                          >
+                            <FaPencilAlt className="text-xs" />
+                          </button>
+                        </div>
                       </td>
                       
                       {/* Ações */}
@@ -604,6 +710,96 @@ const Maintenance = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal de Edição de Observações */}
+      {editingObs && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              handleCancelEditObs();
+            }
+          }}
+        >
+          <div className={`${
+            isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+          } rounded-xl shadow-2xl border max-w-md w-full`}>
+            {/* Header do Modal */}
+            <div className={`px-6 py-4 border-b ${
+              isDarkMode ? 'border-gray-700 bg-gray-750' : 'border-gray-200 bg-gray-50'
+            }`}>
+              <div className="flex items-center gap-3">
+                <FaPencilAlt className={`text-xl ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  Editar Observação
+                </h3>
+              </div>
+              <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Peça: {editingObs.name}
+              </p>
+            </div>
+
+            {/* Conteúdo do Modal */}
+            <div className="px-6 py-4">
+              <label className={`block text-sm font-medium mb-2 ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                Observação
+              </label>
+              <textarea
+                value={obsValue}
+                onChange={(e) => setObsValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && e.ctrlKey) {
+                    e.preventDefault();
+                    handleSaveObs();
+                  } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    handleCancelEditObs();
+                  }
+                }}
+                className={`w-full px-3 py-2 rounded-lg border resize-none ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500'
+                } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50`}
+                placeholder="Digite a observação..."
+                rows={4}
+                autoFocus
+              />
+              <p className={`text-xs mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                Dica: Ctrl+Enter para salvar, Esc para cancelar
+              </p>
+            </div>
+
+            {/* Footer do Modal */}
+            <div className={`px-6 py-4 border-t ${
+              isDarkMode ? 'border-gray-700 bg-gray-750' : 'border-gray-200 bg-gray-50'
+            } flex gap-3 justify-end`}>
+              <button
+                onClick={handleCancelEditObs}
+                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                  isDarkMode 
+                    ? 'bg-gray-600 hover:bg-gray-500 text-white' 
+                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                } focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50`}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveObs}
+                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                  isDarkMode 
+                    ? 'bg-blue-700 hover:bg-blue-600' 
+                    : 'bg-blue-600 hover:bg-blue-700'
+                } text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 hover:shadow-lg transform hover:scale-105`}
+              >
+                Salvar Observação
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
