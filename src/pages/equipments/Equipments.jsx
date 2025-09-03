@@ -515,49 +515,7 @@ const Equipments = () => {
     }
   };
 
-  /**
-   * ✅ Exportar Dados
-   */
-  const exportToCSV = () => {
-    const headers = ['ID', 'Nome', 'Atualizado', 'Local', 'Horas Trabalhadas', 'Horas Restantes', 'Temperatura', 'Velocidade GPS', 'Status', 'Peças Vencidas', 'Peças em Atenção'];
-    const csvData = [
-      headers.join(','),
-      ...filteredEquipments.map(eq => {
-        const overdueInfo = getOverdueMaintenanceInfo(eq.id);
-        const attentionInfo = getAttentionMaintenanceInfo(eq.id);
-        
-        const overdueParts = overdueInfo 
-          ? `"${overdueInfo.sortedMaintenances.map(m => `${m.name} (${Math.abs(m.remaining_hours)}h vencidas)`).join('; ')}"` 
-          : '';
-        
-        const attentionParts = attentionInfo 
-          ? `"${attentionInfo.sortedMaintenances.map(m => `${m.name} (${Math.round(m.remaining_hours)}h restantes)`).join('; ')}"` 
-          : '';
 
-        return [
-          eq.device || 'N/A',
-          `"${eq.name}"`,
-          eq.deviceData?.updated_at ? new Date(eq.deviceData.updated_at).toLocaleString('pt-BR') : 'N/A',
-          `"${eq.model || 'N/A'}"`,
-          eq.worked_hours || 0,
-          eq.min_remaining_hours || 0,
-          eq.deviceData?.calculated_temperature || 'N/A',
-          eq.deviceData?.speed_gps || 'N/A',
-          getMaintenanceStatus(eq.min_remaining_hours),
-          overdueParts,
-          attentionParts
-        ].join(',');
-      })
-    ].join('\n');
-
-    const blob = new Blob([csvData], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `equipamentos_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
 
   /**
    * ✅ Status Helper
@@ -1046,17 +1004,6 @@ const Equipments = () => {
                 <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
               </svg>
               {isMobile ? 'Limpar' : 'Limpar Filtros'}
-            </button>
-
-            {/* Botão Exportar CSV */}
-            <button
-              onClick={exportToCSV}
-              className={`group ${isMobile ? 'flex-1' : ''} inline-flex items-center justify-center gap-2 ${isMobile ? 'px-4 py-2.5 text-sm' : 'px-6 py-3'} bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-green-300 focus:ring-opacity-50 border-0`}
-            >
-              <svg className="w-4 h-4 group-hover:translate-y-1 transition-transform duration-200" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-              {isMobile ? 'CSV' : 'Exportar CSV'}
             </button>
 
             {/* Botão Adicionar Novo Equipamento */}
