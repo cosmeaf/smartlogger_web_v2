@@ -288,23 +288,42 @@ const Sidebar = () => {
                   <div className={`border-t ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`}></div>
                   
                   {/* Links do sistema */}
-                  {bottomLinks.map((link) => (
-                    <Link
-                      key={link.to}
-                      to={link.to}
-                      className={`flex items-center px-4 py-3 transition-colors duration-200 ${
-                        link.action === 'logout'
-                          ? `${isDarkMode ? 'hover:bg-red-900/20 text-red-400' : 'hover:bg-red-50 text-red-600'}`
-                          : `${isDarkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-50 text-gray-700'}`
-                      }`}
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <div className="text-lg mr-3">
-                        {link.icon}
-                      </div>
-                      <span className="text-sm font-medium">{link.label}</span>
-                    </Link>
-                  ))}
+                  {bottomLinks.map((link) => {
+                    if (link.action === 'logout') {
+                      return (
+                        <button
+                          key={link.to}
+                          onClick={() => {
+                            setIsOpen(false);
+                            handleLogout();
+                          }}
+                          className={`flex items-center px-4 py-3 transition-colors duration-200 w-full text-left ${
+                            isDarkMode ? 'hover:bg-red-900/20 text-red-400' : 'hover:bg-red-50 text-red-600'
+                          }`}
+                        >
+                          <div className="text-lg mr-3">
+                            {link.icon}
+                          </div>
+                          <span className="text-sm font-medium">{link.label}</span>
+                        </button>
+                      );
+                    }
+                    return (
+                      <Link
+                        key={link.to}
+                        to={link.to}
+                        className={`flex items-center px-4 py-3 transition-colors duration-200 ${
+                          isDarkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-50 text-gray-700'
+                        }`}
+                        onClick={() => setIsOpen(false)}
+                      >
+                        <div className="text-lg mr-3">
+                          {link.icon}
+                        </div>
+                        <span className="text-sm font-medium">{link.label}</span>
+                      </Link>
+                    );
+                  })}
                   
                   {/* Versão */}
                   <div className={`px-4 py-2 border-t ${isDarkMode ? 'border-gray-600 bg-gray-800/50' : 'border-gray-200 bg-gray-50'}`}>
@@ -452,35 +471,58 @@ const Sidebar = () => {
         
         {bottomLinks.map((link) => {
           const isActive = location.pathname === link.to;
+          if (link.action === 'logout') {
+            return (
+              <button
+                key={link.to}
+                onClick={handleLogout}
+                className={`flex items-center py-3 px-4 mb-2 rounded-xl transition-all duration-200 group relative hover:bg-red-600/20 hover:text-red-400 ${
+                  isOpen ? 'justify-start' : 'justify-center'
+                } w-full text-left`}
+                aria-label={link.label}
+              >
+                <div className={`text-lg ${!isOpen ? 'mx-auto' : 'ml-0'} text-blue-400 group-hover:text-red-400`}>
+                  {link.icon}
+                </div>
+                {isOpen && (
+                  <span className="ml-4 text-sm font-medium text-blue-400 group-hover:text-red-400">
+                    {link.label}
+                  </span>
+                )}
+                
+                {/* Tooltip para sidebar fechada */}
+                {!isOpen && (
+                  <span className="absolute left-full ml-3 w-max bg-gray-900 text-white text-sm rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-50 shadow-xl border border-gray-700">
+                    {link.label}
+                    <div className="absolute top-1/2 left-0 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-gray-900 rotate-45 border-l border-b border-gray-700"></div>
+                  </span>
+                )}
+              </button>
+            );
+          }
           return (
             <Link
               key={link.to}
               to={link.to}
               className={`flex items-center py-3 px-4 mb-2 rounded-xl transition-all duration-200 group relative ${
-                link.action === 'logout'
-                  ? 'hover:bg-red-600/20 hover:text-red-400'
-                  : isActive 
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg shadow-blue-500/25' 
-                    : 'hover:bg-blue-700/50 hover:shadow-md'
+                isActive 
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg shadow-blue-500/25' 
+                  : 'hover:bg-blue-700/50 hover:shadow-md'
               } ${isOpen ? 'justify-start' : 'justify-center'}`}
               aria-label={link.label}
             >
               <div className={`text-lg ${!isOpen ? 'mx-auto' : 'ml-0'} ${
-                link.action === 'logout'
-                  ? 'text-blue-400 group-hover:text-red-400'
-                  : isActive 
-                    ? 'text-white' 
-                    : 'text-blue-300 group-hover:text-white'
+                isActive 
+                  ? 'text-white' 
+                  : 'text-blue-300 group-hover:text-white'
               }`}>
                 {link.icon}
               </div>
               {isOpen && (
                 <span className={`ml-4 text-sm font-medium ${
-                  link.action === 'logout'
-                    ? 'text-blue-400 group-hover:text-red-400'
-                    : isActive 
-                      ? 'text-white' 
-                      : 'text-blue-300 group-hover:text-white'
+                  isActive 
+                    ? 'text-white' 
+                    : 'text-blue-300 group-hover:text-white'
                 }`}>
                   {link.label}
                 </span>

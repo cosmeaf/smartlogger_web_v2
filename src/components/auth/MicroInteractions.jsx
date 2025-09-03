@@ -188,7 +188,7 @@ export const FloatingParticles = ({ isDarkMode, count = 20 }) => {
             borderRadius: '50%',
             backgroundColor: isDarkMode 
               ? `rgba(144, 202, 249, ${Math.random() * 0.3 + 0.1})`
-              : `rgba(25, 118, 210, ${Math.random() * 0.3 + 0.1})`,
+              : `rgba(255, 255, 255, ${Math.random() * 0.4 + 0.2})`,
             left: `${Math.random() * 100}%`,
             top: `${Math.random() * 100}%`,
             animation: `floatParticle ${Math.random() * 10 + 10}s linear infinite`,
