@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { AuthContext } from '../../context/AuthContext';
 import { 
   Box, 
   IconButton, 
@@ -24,15 +25,23 @@ const BiometricAuth = ({
   isDarkMode,
   disabled = false 
 }) => {
+  const { loginWithBiometric, getBiometricCredentials } = useContext(AuthContext);
   const [isSupported, setIsSupported] = useState(false);
   const [isEnrolled, setIsEnrolled] = useState(false);
+  const [hasCredentials, setHasCredentials] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   // Verificar suporte à biometria
   useEffect(() => {
     checkBiometricSupport();
+    checkSavedCredentials();
   }, []);
+
+  const checkSavedCredentials = () => {
+    const credentials = getBiometricCredentials();
+    setHasCredentials(!!credentials);
+  };
 
   const checkBiometricSupport = async () => {
     try {
@@ -47,9 +56,9 @@ const BiometricAuth = ({
       
       setIsSupported(available);
 
-      // Verificar se já há credenciais salvas
-      const savedCredentials = localStorage.getItem('biometric_enrolled');
-      setIsEnrolled(!!savedCredentials);
+      // Verificar se já há WebAuthn registrado
+      const savedWebAuthn = localStorage.getItem('biometric_webauthn');
+      setIsEnrolled(!!savedWebAuthn);
 
     } catch (err) {
       console.log('Biometric not supported:', err);
@@ -61,13 +70,24 @@ const BiometricAuth = ({
     setError('');
 
     try {
+      // Verificar se há credenciais salvas primeiro
+      const credentials = getBiometricCredentials();
+      if (!credentials) {
+        setError('Faça login primeiro para configurar a biometria');
+        setLoading(false);
+        return;
+      }
+
       // Gerar challenge aleatório
       const challenge = new Uint8Array(32);
       crypto.getRandomValues(challenge);
 
-      // Gerar user ID aleatório
+      // Gerar user ID baseado no email do usuário
+      const userEmail = credentials.email;
+      const encoder = new TextEncoder();
+      const userIdArray = encoder.encode(userEmail);
       const userId = new Uint8Array(32);
-      crypto.getRandomValues(userId);
+      userId.set(userIdArray.slice(0, Math.min(userIdArray.length, 32)));
 
       const credential = await navigator.credentials.create({
         publicKey: {
@@ -78,7 +98,7 @@ const BiometricAuth = ({
           },
           user: {
             id: userId,
-            name: "user@smartlogger.com",
+            name: userEmail,
             displayName: "SmartLogger User",
           },
           pubKeyCredParams: [
@@ -96,19 +116,21 @@ const BiometricAuth = ({
       });
 
       if (credential) {
-        // Salvar credencial localmente (em produção, salvar no servidor)
+        // Salvar credencial biométrica localmente
         const credentialData = {
           id: credential.id,
           rawId: Array.from(new Uint8Array(credential.rawId)),
           type: credential.type,
+          userEmail: userEmail,
           enrolled: Date.now()
         };
 
-        localStorage.setItem('biometric_enrolled', JSON.stringify(credentialData));
+        localStorage.setItem('biometric_webauthn', JSON.stringify(credentialData));
         setIsEnrolled(true);
         
-        // Executar login automaticamente após enrollment
-        authenticateWithBiometric();
+        // Sucesso no enrollment
+        setError('');
+        console.log('Biometria configurada com sucesso para:', userEmail);
       }
 
     } catch (err) {
@@ -124,17 +146,25 @@ const BiometricAuth = ({
     setError('');
 
     try {
-      const savedCredentials = localStorage.getItem('biometric_enrolled');
-      if (!savedCredentials) {
-        throw new Error('No credentials found');
+      // Verificar se há credenciais de login salvas
+      const credentials = getBiometricCredentials();
+      if (!credentials) {
+        throw new Error('Nenhuma credencial de login encontrada. Faça login primeiro.');
       }
 
-      const credData = JSON.parse(savedCredentials);
+      // Verificar se há credencial biométrica registrada
+      const savedWebAuthn = localStorage.getItem('biometric_webauthn');
+      if (!savedWebAuthn) {
+        throw new Error('Biometria não configurada');
+      }
+
+      const credData = JSON.parse(savedWebAuthn);
       
       // Gerar challenge aleatório
       const challenge = new Uint8Array(32);
       crypto.getRandomValues(challenge);
 
+      // Tentar autenticação biométrica primeiro
       const assertion = await navigator.credentials.get({
         publicKey: {
           challenge: challenge,
@@ -148,12 +178,20 @@ const BiometricAuth = ({
       });
 
       if (assertion) {
-        // Sucesso na autenticação
-        onSuccess && onSuccess({
-          type: 'biometric',
-          credential: assertion,
-          timestamp: Date.now()
-        });
+        // Biometria validada, agora fazer login real
+        console.log('Biometria validada, fazendo login...');
+        const loginSuccess = await loginWithBiometric();
+        
+        if (loginSuccess) {
+          onSuccess && onSuccess({
+            type: 'biometric',
+            credential: assertion,
+            email: credentials.email,
+            timestamp: Date.now()
+          });
+        } else {
+          throw new Error('Falha no login após validação biométrica');
+        }
       }
 
     } catch (err) {
@@ -202,7 +240,7 @@ const BiometricAuth = ({
     return 'Biometria';
   };
 
-  if (!isSupported) {
+  if (!isSupported || !hasCredentials) {
     return null;
   }
 

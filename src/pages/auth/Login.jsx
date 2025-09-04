@@ -31,7 +31,7 @@ import { Visibility, VisibilityOff, Lock, Apartment, DarkMode, LightMode } from 
 
 
 const Login = () => {
-  const { login, error, showLogoutSuccess, clearLogoutSuccess } = useContext(AuthContext);
+  const { login, error, showLogoutSuccess, clearLogoutSuccess, loginWithBiometric } = useContext(AuthContext);
   const { isDarkMode, toggleTheme } = useTheme();
   const { isMobile, isTablet, screenWidth } = useDevice();
   
@@ -149,6 +149,7 @@ const Login = () => {
     });
     
     setTimeout(() => {
+      console.log('Redirecionando para dashboard após login biométrico...');
       navigate('/dashboard');
     }, 1500);
   };
