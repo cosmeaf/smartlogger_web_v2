@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Swal from 'sweetalert2';
-import { FaChartBar, FaChartLine, FaFilter, FaTable, FaCalendarAlt, FaFileAlt, FaSpinner, FaMapMarkerAlt, FaPlay, FaPause, FaRedo, FaInfoCircle } from 'react-icons/fa';
+import { FaChartBar, FaChartLine, FaChartArea, FaChartPie, FaRoute, FaFilter, FaTable, FaCalendarAlt, FaFileAlt, FaSpinner, FaMapMarkerAlt, FaPlay, FaPause, FaRedo, FaInfoCircle } from 'react-icons/fa';
 import { useTheme } from '../../context/ThemeContext';
 import { useDevice } from '../../context/DeviceContext';
 import databaseService from '../../services/databaseService';
@@ -41,6 +41,11 @@ const Reports = () => {
   const [top, setTop] = useState('dataMax+1');
   const [bottom, setBottom] = useState('dataMin-1');
   const [animation, setAnimation] = useState(true);
+
+  // Estados para controle de eixo Y dos novos gráficos
+  const [tempoChartYDomain, setTempoChartYDomain] = useState({ min: 'auto', max: 'auto' });
+  const [odometroChartYDomain, setOdometroChartYDomain] = useState({ min: 'auto', max: 'auto' });
+  const [resumoChartYDomain, setResumoChartYDomain] = useState({ min: 'auto', max: 'auto' });
 
   // Estados para o mapa de calor (MapLibre)
   const [map, setMap] = useState(null);
@@ -587,6 +592,160 @@ const Reports = () => {
     ];
 
     return { yDomain, xDomain };
+  };
+
+  // Função para calcular domínios dinâmicos do gráfico de Odômetro GPS
+  const getOdometroChartDomains = () => {
+    // Preparar dados do odômetro
+    const chartData = reportData
+      .filter(position => {
+        let attrs = position.attributes;
+        if (typeof attrs === 'string') {
+          try { attrs = JSON.parse(attrs); } catch { return false; }
+        }
+        return attrs && attrs.io16 !== undefined;
+      })
+      .map(position => {
+        let attrs = position.attributes;
+        if (typeof attrs === 'string') {
+          try { attrs = JSON.parse(attrs); } catch { attrs = {}; }
+        }
+        // Converter metros para quilômetros
+        return (parseFloat(attrs?.io16) || 0) / 1000;
+      });
+
+    if (!chartData.length) return { yDomain: [0, 100], xDomain: ['dataMin', 'dataMax'] };
+
+    // Calcular domínio Y (valores de Odômetro em km)
+    const minY = Math.min(...chartData);
+    const maxY = Math.max(...chartData);
+    
+    // Adicionar uma margem de 5% para melhor visualização
+    const yMargin = Math.max((maxY - minY) * 0.05, 1); // Margem mínima de 1 km
+    const yDomain = [
+      Math.max(0, Number((minY - yMargin).toFixed(1))), // Não pode ser menor que 0
+      Number((maxY + yMargin).toFixed(1))
+    ];
+
+    return { yDomain, xDomain: ['dataMin', 'dataMax'] };
+  };
+
+  // Função para calcular domínios dinâmicos do gráfico Resumo Diário Multi-métrica
+  const getResumoChartDomains = () => {
+    // Agrupar dados por dia
+    const dailyData = {};
+    reportData.forEach(position => {
+      const date = new Date(position.devicetime).toLocaleDateString('pt-BR');
+      if (!dailyData[date]) {
+        dailyData[date] = {
+          positions: [],
+          speeds: [],
+          horimetros: [],
+          odometros: [],
+          temposAtivos: [],
+          temposOciosos: []
+        };
+      }
+      
+      dailyData[date].positions.push(position);
+      
+      if (position.speed) dailyData[date].speeds.push(position.speed);
+      
+      let attrs = position.attributes;
+      if (typeof attrs === 'string') {
+        try { attrs = JSON.parse(attrs); } catch { attrs = {}; }
+      }
+      
+      if (attrs?.io18) dailyData[date].horimetros.push(parseFloat(attrs.io18) / 60); // Converter minutos para horas
+      if (attrs?.io16) dailyData[date].odometros.push(parseFloat(attrs.io16));
+      if (attrs?.io19) dailyData[date].temposAtivos.push(parseFloat(attrs.io19));
+      if (attrs?.io20) dailyData[date].temposOciosos.push(parseFloat(attrs.io20));
+    });
+
+    // Calcular médias diárias
+    const chartData = Object.entries(dailyData)
+      .map(([date, data]) => ({
+        date,
+        velocidadeMedia: data.speeds.length > 0 ? 
+          data.speeds.reduce((sum, speed) => sum + speed, 0) / data.speeds.length : 0,
+        horimetroMedio: data.horimetros.length > 0 ? 
+          data.horimetros.reduce((sum, h) => sum + h, 0) / data.horimetros.length : 0,
+        distanciaPercorrida: data.odometros.length > 0 ? 
+          (Math.max(...data.odometros) - Math.min(...data.odometros)) / 1000 : 0, // Converter para km
+        eficiencia: data.temposAtivos.length > 0 && data.temposOciosos.length > 0 ? 
+          (data.temposAtivos.reduce((sum, t) => sum + t, 0) / 
+           (data.temposAtivos.reduce((sum, t) => sum + t, 0) + data.temposOciosos.reduce((sum, t) => sum + t, 0))) * 100 : 0
+      }));
+
+    if (!chartData.length) return { 
+      velocidadeDomain: [0, 50],
+      eficienciaDomain: [0, 100], 
+      horimetroDomain: [0, 8],
+      distanciaDomain: [0, 50],
+      xDomain: ['dataMin', 'dataMax'] 
+    };
+
+    // Extrair valores de cada métrica individualmente
+    const velocidades = chartData.map(item => item.velocidadeMedia).filter(v => v > 0);
+    const eficiencias = chartData.map(item => item.eficiencia).filter(e => e > 0);
+    const horimetros = chartData.map(item => item.horimetroMedio).filter(h => h > 0);
+    const distancias = chartData.map(item => item.distanciaPercorrida).filter(d => d > 0);
+
+    // Calcular domínio individual para Velocidade
+    let velocidadeDomain = [0, 50];
+    if (velocidades.length > 0) {
+      const velMin = Math.min(...velocidades);
+      const velMax = Math.max(...velocidades);
+      const velMargin = Math.max((velMax - velMin) * 0.1, 2);
+      velocidadeDomain = [
+        Math.max(0, Number((velMin - velMargin).toFixed(1))),
+        Number((velMax + velMargin).toFixed(1))
+      ];
+    }
+
+    // Calcular domínio individual para Eficiência
+    let eficienciaDomain = [0, 100];
+    if (eficiencias.length > 0) {
+      const efMin = Math.min(...eficiencias);
+      const efMax = Math.max(...eficiencias);
+      const efMargin = Math.max((efMax - efMin) * 0.1, 5);
+      eficienciaDomain = [
+        Math.max(0, Number((efMin - efMargin).toFixed(1))),
+        Math.min(100, Number((efMax + efMargin).toFixed(1)))
+      ];
+    }
+
+    // Calcular domínio individual para Horímetro
+    let horimetroDomain = [0, 8];
+    if (horimetros.length > 0) {
+      const horMin = Math.min(...horimetros);
+      const horMax = Math.max(...horimetros);
+      const horMargin = Math.max((horMax - horMin) * 0.1, 0.5);
+      horimetroDomain = [
+        Math.max(0, Number((horMin - horMargin).toFixed(1))),
+        Number((horMax + horMargin).toFixed(1))
+      ];
+    }
+
+    // Calcular domínio individual para Distância
+    let distanciaDomain = [0, 50];
+    if (distancias.length > 0) {
+      const distMin = Math.min(...distancias);
+      const distMax = Math.max(...distancias);
+      const distMargin = Math.max((distMax - distMin) * 0.1, 2);
+      distanciaDomain = [
+        Math.max(0, Number((distMin - distMargin).toFixed(1))),
+        Number((distMax + distMargin).toFixed(1))
+      ];
+    }
+
+    return { 
+      velocidadeDomain,
+      eficienciaDomain, 
+      horimetroDomain,
+      distanciaDomain,
+      xDomain: ['dataMin', 'dataMax'] 
+    };
   };
 
 
@@ -3628,6 +3787,671 @@ const Reports = () => {
                   </p>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Gráfico de Tempo Ocioso vs Tempo Ativo */}
+        {reportData.length > 0 && (
+          <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-lg border overflow-hidden mb-6`}>
+            {/* Header do Gráfico */}
+            <div className={`px-6 py-4 border-b ${isDarkMode ? 'border-gray-700 bg-gray-750' : 'border-gray-200 bg-gray-50'}`}>
+              <div className="flex flex-col md:flex-row md:items-center gap-4 justify-between">
+                <div className="flex items-center gap-2">
+                  <FaChartArea className={`text-lg ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`} />
+                  <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    Tempo Ocioso vs Tempo Ativo
+                  </h3>
+                  <span className={`text-xs px-2 py-1 rounded-full ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-600'}`}>
+                    horas
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className={`px-3 py-1 rounded-lg text-xs font-medium ${isDarkMode ? 'bg-gray-700 text-emerald-200' : 'bg-emerald-100 text-emerald-800'}`}>
+                    {(() => {
+                      const data = reportData.filter(position => {
+                        let attrs = position.attributes;
+                        if (typeof attrs === 'string') {
+                          try { attrs = JSON.parse(attrs); } catch { return false; }
+                        }
+                        return attrs && (attrs.io19 !== undefined || attrs.io20 !== undefined);
+                      });
+                      return data.length;
+                    })()} pontos
+                  </div>
+                  {(() => {
+                    const data = reportData.filter(position => {
+                      let attrs = position.attributes;
+                      if (typeof attrs === 'string') {
+                        try { attrs = JSON.parse(attrs); } catch { return false; }
+                      }
+                      return attrs && (attrs.io19 !== undefined || attrs.io20 !== undefined);
+                    });
+                    
+                    if (data.length > 0) {
+                      const totalAtivo = data.reduce((sum, position) => {
+                        let attrs = position.attributes;
+                        if (typeof attrs === 'string') {
+                          try { attrs = JSON.parse(attrs); } catch { return sum; }
+                        }
+                        return sum + (parseFloat(attrs?.io19) || 0);
+                      }, 0) / 60; // Converter de minutos para horas
+                      
+                      const totalOcioso = data.reduce((sum, position) => {
+                        let attrs = position.attributes;
+                        if (typeof attrs === 'string') {
+                          try { attrs = JSON.parse(attrs); } catch { return sum; }
+                        }
+                        return sum + (parseFloat(attrs?.io20) || 0);
+                      }, 0) / 60; // Converter de minutos para horas
+                      
+                      return (
+                        <>
+                          <div className={`px-3 py-1 rounded-lg text-xs font-medium ${isDarkMode ? 'bg-green-800 text-green-200' : 'bg-green-100 text-green-800'}`}>
+                            Ativo: {totalAtivo.toFixed(1)}h
+                          </div>
+                          <div className={`px-3 py-1 rounded-lg text-xs font-medium ${isDarkMode ? 'bg-red-800 text-red-200' : 'bg-red-100 text-red-800'}`}>
+                            Ocioso: {totalOcioso.toFixed(1)}h
+                          </div>
+                        </>
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
+              </div>
+            </div>
+
+            {/* Conteúdo do Gráfico */}
+            <div className="p-6">
+              {(() => {
+                const data = reportData
+                  .filter(position => {
+                    let attrs = position.attributes;
+                    if (typeof attrs === 'string') {
+                      try { attrs = JSON.parse(attrs); } catch { return false; }
+                    }
+                    return attrs && (attrs.io19 !== undefined || attrs.io20 !== undefined);
+                  })
+                  .map(position => {
+                    let attrs = position.attributes;
+                    if (typeof attrs === 'string') {
+                      try { attrs = JSON.parse(attrs); } catch { attrs = {}; }
+                    }
+                    
+                    const deviceTime = new Date(position.devicetime);
+                    const dateStr = deviceTime.toLocaleDateString('pt-BR');
+                    const timeStr = deviceTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    
+                    return {
+                      date: dateStr,
+                      time: timeStr,
+                      datetime: deviceTime,
+                      tempoAtivo: (parseFloat(attrs?.io19) || 0) / 60, // Converter de minutos para horas
+                      tempoOcioso: (parseFloat(attrs?.io20) || 0) / 60 // Converter de minutos para horas
+                    };
+                  })
+                  .sort((a, b) => a.datetime - b.datetime);
+
+                return data.length > 0 ? (
+                  <div style={{ width: '100%', height: '300px' }}>
+                    <ResponsiveContainer>
+                      <LineChart data={[...data].reverse()}>
+                        <CartesianGrid 
+                          strokeDasharray="3 3" 
+                          stroke={isDarkMode ? '#374151' : '#d1d5db'} 
+                          strokeWidth={1}
+                        />
+                        <XAxis 
+                          dataKey="date" 
+                          stroke={isDarkMode ? '#9ca3af' : '#4b5563'}
+                          fontSize={12}
+                          angle={-45}
+                          textAnchor="end"
+                          height={60}
+                          type="category"
+                          scale="auto"
+                          reversed={true}
+                        />
+                        <YAxis 
+                          stroke={isDarkMode ? '#9ca3af' : '#4b5563'}
+                          fontSize={12}
+                          type="number"
+                          scale="linear"
+                          tickCount={8}
+                          label={{ 
+                            value: 'Tempo (horas)', 
+                            angle: -90, 
+                            position: 'insideLeft',
+                            style: { textAnchor: 'middle', fill: isDarkMode ? '#9ca3af' : '#4b5563' }
+                          }}
+                        />
+                        <Tooltip 
+                          contentStyle={{
+                            backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
+                            border: `1px solid ${isDarkMode ? '#374151' : '#d1d5db'}`,
+                            borderRadius: '8px',
+                            color: isDarkMode ? '#f9fafb' : '#111827',
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                          }}
+                          labelStyle={{
+                            color: isDarkMode ? '#f9fafb' : '#111827',
+                            fontWeight: 'bold'
+                          }}
+                          formatter={(value, name) => {
+                            if (name === 'tempoAtivo') {
+                              return [`${value.toFixed(1)} horas`, 'Tempo Ativo'];
+                            } else if (name === 'tempoOcioso') {
+                              return [`${value.toFixed(1)} horas`, 'Tempo Ocioso'];
+                            }
+                            return [`${value.toFixed(1)} horas`, name];
+                          }}
+                          labelFormatter={(label, payload) => {
+                            if (payload && payload.length > 0) {
+                              const data = payload[0].payload;
+                              return `${data.date} (${data.time})`;
+                            }
+                            return label;
+                          }}
+                          cursor={{ stroke: isDarkMode ? '#10b981' : '#059669', strokeWidth: 1 }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="tempoAtivo" 
+                          stroke={isDarkMode ? '#10b981' : '#059669'}
+                          strokeWidth={2}
+                          dot={{ 
+                            fill: isDarkMode ? '#10b981' : '#059669', 
+                            strokeWidth: 2, 
+                            r: 4,
+                            stroke: isDarkMode ? '#34d399' : '#10b981'
+                          }}
+                          activeDot={{ 
+                            r: 6, 
+                            fill: isDarkMode ? '#34d399' : '#10b981',
+                            stroke: isDarkMode ? '#6ee7b7' : '#34d399',
+                            strokeWidth: 2
+                          }}
+                          connectNulls={false}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="tempoOcioso" 
+                          stroke={isDarkMode ? '#ef4444' : '#dc2626'}
+                          strokeWidth={2}
+                          dot={{ 
+                            fill: isDarkMode ? '#ef4444' : '#dc2626', 
+                            strokeWidth: 2, 
+                            r: 4,
+                            stroke: isDarkMode ? '#f87171' : '#ef4444'
+                          }}
+                          activeDot={{ 
+                            r: 6, 
+                            fill: isDarkMode ? '#f87171' : '#ef4444',
+                            stroke: isDarkMode ? '#fca5a5' : '#f87171',
+                            strokeWidth: 2
+                          }}
+                          connectNulls={false}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="text-4xl mb-4">⏱️</div>
+                    <h4 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      Sem Dados de Tempo
+                    </h4>
+                    <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Não há dados de Tempo Ativo (IO19) e Tempo Ocioso (IO20) disponíveis para este período
+                    </p>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        )}
+
+        {/* Gráfico de Odômetro GPS */}
+        {reportData.length > 0 && (
+          <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-lg border overflow-hidden mb-6`}>
+            {/* Header do Gráfico */}
+            <div className={`px-6 py-4 border-b ${isDarkMode ? 'border-gray-700 bg-gray-750' : 'border-gray-200 bg-gray-50'}`}>
+              <div className="flex flex-col md:flex-row md:items-center gap-4 justify-between">
+                <div className="flex items-center gap-2">
+                  <FaRoute className={`text-lg ${isDarkMode ? 'text-cyan-400' : 'text-cyan-600'}`} />
+                  <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    Odômetro GPS
+                  </h3>
+                  <span className={`text-xs px-2 py-1 rounded-full ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-600'}`}>
+                    quilometragem
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className={`px-3 py-1 rounded-lg text-xs font-medium ${isDarkMode ? 'bg-gray-700 text-cyan-200' : 'bg-cyan-100 text-cyan-800'}`}>
+                    {(() => {
+                      const data = reportData.filter(position => {
+                        let attrs = position.attributes;
+                        if (typeof attrs === 'string') {
+                          try { attrs = JSON.parse(attrs); } catch { return false; }
+                        }
+                        return attrs && attrs.io16 !== undefined;
+                      });
+                      return data.length;
+                    })()} pontos
+                  </div>
+                  {(() => {
+                    const data = reportData.filter(position => {
+                      let attrs = position.attributes;
+                      if (typeof attrs === 'string') {
+                        try { attrs = JSON.parse(attrs); } catch { return false; }
+                      }
+                      return attrs && attrs.io16 !== undefined;
+                    });
+                    
+                    if (data.length > 0) {
+                      const values = data.map(position => {
+                        let attrs = position.attributes;
+                        if (typeof attrs === 'string') {
+                          try { attrs = JSON.parse(attrs); } catch { return 0; }
+                        }
+                        // Converter metros para quilômetros
+                        return (parseFloat(attrs?.io16) || 0) / 1000;
+                      });
+                      
+                      const max = Math.max(...values);
+                      const min = Math.min(...values);
+                      const distanciaPercorrida = max - min;
+                      
+                      return (
+                        <>
+                          <div className={`px-3 py-1 rounded-lg text-xs font-medium ${isDarkMode ? 'bg-blue-800 text-blue-200' : 'bg-blue-100 text-blue-800'}`}>
+                            Máx: {max.toFixed(1)} km
+                          </div>
+                          <div className={`px-3 py-1 rounded-lg text-xs font-medium ${isDarkMode ? 'bg-green-800 text-green-200' : 'bg-green-100 text-green-800'}`}>
+                            Percorrido: {distanciaPercorrida.toFixed(1)} km
+                          </div>
+                        </>
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
+              </div>
+            </div>
+
+            {/* Conteúdo do Gráfico */}
+            <div className="p-6">
+              {(() => {
+                const chartData = reportData
+                  .filter(position => {
+                    let attrs = position.attributes;
+                    if (typeof attrs === 'string') {
+                      try { attrs = JSON.parse(attrs); } catch { return false; }
+                    }
+                    return attrs && attrs.io16 !== undefined;
+                  })
+                  .map(position => {
+                    let attrs = position.attributes;
+                    if (typeof attrs === 'string') {
+                      try { attrs = JSON.parse(attrs); } catch { attrs = {}; }
+                    }
+                    
+                    const deviceTime = new Date(position.devicetime);
+                    const dateStr = deviceTime.toLocaleDateString('pt-BR');
+                    const timeStr = deviceTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    
+                    return {
+                      date: dateStr,
+                      time: timeStr,
+                      datetime: deviceTime,
+                      odometro: (parseFloat(attrs?.io16) || 0) / 1000 // Converter metros para quilômetros
+                    };
+                  })
+                  .sort((a, b) => a.datetime - b.datetime);
+
+                return chartData.length > 0 ? (
+                  <div style={{ width: '100%', height: '300px' }}>
+                    <ResponsiveContainer>
+                      <LineChart data={[...chartData].reverse()}>
+                        <CartesianGrid 
+                          strokeDasharray="3 3" 
+                          stroke={isDarkMode ? '#374151' : '#d1d5db'} 
+                          strokeWidth={1}
+                        />
+                        <XAxis 
+                          dataKey="date" 
+                          stroke={isDarkMode ? '#9ca3af' : '#4b5563'}
+                          fontSize={12}
+                          angle={-45}
+                          textAnchor="end"
+                          height={60}
+                          type="category"
+                          scale="auto"
+                          reversed={true}
+                        />
+                        <YAxis 
+                          stroke={isDarkMode ? '#9ca3af' : '#4b5563'}
+                          fontSize={12}
+                          domain={getOdometroChartDomains().yDomain}
+                          type="number"
+                          scale="linear"
+                          tickCount={8}
+                          label={{ 
+                            value: 'Distância (km)', 
+                            angle: -90, 
+                            position: 'insideLeft',
+                            style: { textAnchor: 'middle', fill: isDarkMode ? '#9ca3af' : '#4b5563' }
+                          }}
+                        />
+                        <Tooltip 
+                          contentStyle={{
+                            backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
+                            border: `1px solid ${isDarkMode ? '#374151' : '#d1d5db'}`,
+                            borderRadius: '8px',
+                            color: isDarkMode ? '#f9fafb' : '#111827',
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                          }}
+                          labelStyle={{
+                            color: isDarkMode ? '#f9fafb' : '#111827',
+                            fontWeight: 'bold'
+                          }}
+                          formatter={(value, name, props) => [
+                            `${value.toFixed(1)} km`,
+                            'Odômetro GPS'
+                          ]}
+                          labelFormatter={(label, payload) => {
+                            if (payload && payload.length > 0) {
+                              const originalData = payload[0].payload;
+                              return `${originalData.date} (${originalData.time})`;
+                            }
+                            return label;
+                          }}
+                          cursor={{ stroke: isDarkMode ? '#06b6d4' : '#0891b2', strokeWidth: 1 }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="odometro" 
+                          stroke={isDarkMode ? '#06b6d4' : '#0891b2'}
+                          strokeWidth={2}
+                          dot={{ 
+                            fill: isDarkMode ? '#06b6d4' : '#0891b2', 
+                            strokeWidth: 2, 
+                            r: 4,
+                            stroke: isDarkMode ? '#22d3ee' : '#06b6d4'
+                          }}
+                          activeDot={{ 
+                            r: 6, 
+                            fill: isDarkMode ? '#22d3ee' : '#06b6d4',
+                            stroke: isDarkMode ? '#67e8f9' : '#22d3ee',
+                            strokeWidth: 2
+                          }}
+                          connectNulls={false}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="text-4xl mb-4">🛣️</div>
+                    <h4 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      Sem Dados de Odômetro
+                    </h4>
+                    <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Não há dados de Odômetro GPS (IO16) disponíveis para este período
+                    </p>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        )}
+
+        {/* Gráfico de Resumo Diário Multi-métrica */}
+        {reportData.length > 0 && (
+          <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-lg border overflow-hidden mb-6`}>
+            {/* Header do Gráfico */}
+            <div className={`px-6 py-4 border-b ${isDarkMode ? 'border-gray-700 bg-gray-750' : 'border-gray-200 bg-gray-50'}`}>
+              <div className="flex flex-col md:flex-row md:items-center gap-4 justify-between">
+                <div className="flex items-center gap-2">
+                  <FaChartPie className={`text-lg ${isDarkMode ? 'text-violet-400' : 'text-violet-600'}`} />
+                  <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    Resumo Diário Multi-métrica
+                  </h3>
+                  <span className={`text-xs px-2 py-1 rounded-full ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-600'}`}>
+                    médias diárias
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className={`px-3 py-1 rounded-lg text-xs font-medium ${isDarkMode ? 'bg-gray-700 text-violet-200' : 'bg-violet-100 text-violet-800'}`}>
+                    {(() => {
+                      const dailyData = {};
+                      reportData.forEach(position => {
+                        const date = new Date(position.devicetime).toLocaleDateString('pt-BR');
+                        if (!dailyData[date]) dailyData[date] = [];
+                        dailyData[date].push(position);
+                      });
+                      return Object.keys(dailyData).length;
+                    })()} dias
+                  </div>
+                  <div className={`px-3 py-1 rounded-lg text-xs font-medium ${isDarkMode ? 'bg-green-800 text-green-200' : 'bg-green-100 text-green-800'}`}>
+                    4 métricas
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Conteúdo do Gráfico */}
+            <div className="p-6">
+              {(() => {
+                // Agrupar dados por dia
+                const dailyData = {};
+                reportData.forEach(position => {
+                  const date = new Date(position.devicetime).toLocaleDateString('pt-BR');
+                  if (!dailyData[date]) {
+                    dailyData[date] = {
+                      positions: [],
+                      speeds: [],
+                      horimetros: [],
+                      odometros: [],
+                      temposAtivos: [],
+                      temposOciosos: []
+                    };
+                  }
+                  
+                  dailyData[date].positions.push(position);
+                  
+                  if (position.speed) dailyData[date].speeds.push(position.speed);
+                  
+                  let attrs = position.attributes;
+                  if (typeof attrs === 'string') {
+                    try { attrs = JSON.parse(attrs); } catch { attrs = {}; }
+                  }
+                  
+                  if (attrs?.io18) dailyData[date].horimetros.push(parseFloat(attrs.io18) / 60); // Converter minutos para horas
+                  if (attrs?.io16) dailyData[date].odometros.push(parseFloat(attrs.io16));
+                  if (attrs?.io19) dailyData[date].temposAtivos.push(parseFloat(attrs.io19));
+                  if (attrs?.io20) dailyData[date].temposOciosos.push(parseFloat(attrs.io20));
+                });
+
+                // Calcular médias diárias
+                const chartData = Object.entries(dailyData)
+                  .map(([date, data]) => ({
+                    date,
+                    velocidadeMedia: data.speeds.length > 0 ? 
+                      data.speeds.reduce((sum, speed) => sum + speed, 0) / data.speeds.length : 0,
+                    horimetroMedio: data.horimetros.length > 0 ? 
+                      (data.horimetros.reduce((sum, h) => sum + h, 0) / data.horimetros.length) / 60 : 0, // Converter minutos para horas
+                    distanciaPercorrida: data.odometros.length > 0 ? 
+                      (Math.max(...data.odometros) - Math.min(...data.odometros)) / 1000 : 0, // Converter metros para km
+                    eficiencia: data.temposAtivos.length > 0 && data.temposOciosos.length > 0 ? 
+                      (data.temposAtivos.reduce((sum, t) => sum + t, 0) / 
+                       (data.temposAtivos.reduce((sum, t) => sum + t, 0) + data.temposOciosos.reduce((sum, t) => sum + t, 0))) * 100 : 0
+                  }))
+                  .sort((a, b) => new Date(a.date.split('/').reverse().join('-')) - new Date(b.date.split('/').reverse().join('-')));
+
+                return chartData.length > 0 ? (
+                  <div style={{ width: '100%', height: '400px' }}>
+                    <ResponsiveContainer>
+                      <LineChart data={[...chartData].reverse()}>
+                        <CartesianGrid 
+                          strokeDasharray="3 3" 
+                          stroke={isDarkMode ? '#374151' : '#d1d5db'} 
+                          strokeWidth={1}
+                        />
+                        <XAxis 
+                          dataKey="date" 
+                          stroke={isDarkMode ? '#9ca3af' : '#4b5563'}
+                          fontSize={12}
+                          angle={-45}
+                          textAnchor="end"
+                          height={60}
+                          type="category"
+                          scale="auto"
+                          reversed={true}
+                        />
+                        <YAxis 
+                          yAxisId="velocidade"
+                          stroke={isDarkMode ? '#3b82f6' : '#2563eb'}
+                          fontSize={12}
+                          domain={getResumoChartDomains().velocidadeDomain}
+                          type="number"
+                          scale="linear"
+                          tickCount={6}
+                          label={{ 
+                            value: 'Velocidade (km/h)', 
+                            angle: -90, 
+                            position: 'insideLeft',
+                            style: { textAnchor: 'middle', fill: isDarkMode ? '#3b82f6' : '#2563eb' }
+                          }}
+                        />
+                        <YAxis 
+                          yAxisId="eficiencia"
+                          orientation="right"
+                          stroke={isDarkMode ? '#10b981' : '#059669'}
+                          fontSize={12}
+                          domain={getResumoChartDomains().eficienciaDomain}
+                          type="number"
+                          scale="linear"
+                          tickCount={6}
+                          label={{ 
+                            value: 'Eficiência (%)', 
+                            angle: 90, 
+                            position: 'insideRight',
+                            style: { textAnchor: 'middle', fill: isDarkMode ? '#10b981' : '#059669' }
+                          }}
+                        />
+                        <YAxis 
+                          yAxisId="horimetro"
+                          orientation="right"
+                          stroke={isDarkMode ? '#8b5cf6' : '#7c3aed'}
+                          fontSize={12}
+                          domain={getResumoChartDomains().horimetroDomain}
+                          type="number"
+                          scale="linear"
+                          tickCount={6}
+                          axisLine={false}
+                          tickLine={false}
+                          tick={false}
+                        />
+                        <YAxis 
+                          yAxisId="distancia"
+                          orientation="left"
+                          stroke={isDarkMode ? '#06b6d4' : '#0891b2'}
+                          fontSize={12}
+                          domain={getResumoChartDomains().distanciaDomain}
+                          type="number"
+                          scale="linear"
+                          tickCount={6}
+                          axisLine={false}
+                          tickLine={false}
+                          tick={false}
+                        />
+                        <Tooltip 
+                          contentStyle={{
+                            backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
+                            border: `1px solid ${isDarkMode ? '#374151' : '#d1d5db'}`,
+                            borderRadius: '8px',
+                            color: isDarkMode ? '#f9fafb' : '#111827',
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                          }}
+                          labelStyle={{
+                            color: isDarkMode ? '#f9fafb' : '#111827',
+                            fontWeight: 'bold'
+                          }}
+                          formatter={(value, name, props) => {
+                            const formatters = {
+                              velocidadeMedia: val => `${val.toFixed(1)} km/h`,
+                              horimetroMedio: val => `${val.toFixed(1)} horas`,
+                              distanciaPercorrida: val => `${val.toFixed(1)} km`,
+                              eficiencia: val => `${val.toFixed(1)}%`
+                            };
+                            const labels = {
+                              velocidadeMedia: 'Velocidade Média',
+                              horimetroMedio: 'Horímetro Médio',
+                              distanciaPercorrida: 'Distância Percorrida',
+                              eficiencia: 'Eficiência'
+                            };
+                            return [formatters[name](value), labels[name]];
+                          }}
+                          labelFormatter={(label) => `Data: ${label}`}
+                          cursor={{ stroke: isDarkMode ? '#8b5cf6' : '#7c3aed', strokeWidth: 1 }}
+                        />
+                        <Line 
+                          yAxisId="velocidade"
+                          type="monotone" 
+                          dataKey="velocidadeMedia" 
+                          stroke={isDarkMode ? '#3b82f6' : '#2563eb'}
+                          strokeWidth={2}
+                          dot={{ fill: isDarkMode ? '#3b82f6' : '#2563eb', strokeWidth: 2, r: 4 }}
+                          activeDot={{ r: 6, fill: isDarkMode ? '#60a5fa' : '#3b82f6', strokeWidth: 2 }}
+                          connectNulls={false}
+                        />
+                        <Line 
+                          yAxisId="horimetro"
+                          type="monotone" 
+                          dataKey="horimetroMedio" 
+                          stroke={isDarkMode ? '#8b5cf6' : '#7c3aed'}
+                          strokeWidth={2}
+                          dot={{ fill: isDarkMode ? '#8b5cf6' : '#7c3aed', strokeWidth: 2, r: 4 }}
+                          activeDot={{ r: 6, fill: isDarkMode ? '#a78bfa' : '#8b5cf6', strokeWidth: 2 }}
+                          connectNulls={false}
+                        />
+                        <Line 
+                          yAxisId="distancia"
+                          type="monotone" 
+                          dataKey="distanciaPercorrida" 
+                          stroke={isDarkMode ? '#06b6d4' : '#0891b2'}
+                          strokeWidth={2}
+                          dot={{ fill: isDarkMode ? '#06b6d4' : '#0891b2', strokeWidth: 2, r: 4 }}
+                          activeDot={{ r: 6, fill: isDarkMode ? '#22d3ee' : '#06b6d4', strokeWidth: 2 }}
+                          connectNulls={false}
+                        />
+                        <Line 
+                          yAxisId="eficiencia"
+                          type="monotone" 
+                          dataKey="eficiencia" 
+                          stroke={isDarkMode ? '#10b981' : '#059669'}
+                          strokeWidth={2}
+                          dot={{ fill: isDarkMode ? '#10b981' : '#059669', strokeWidth: 2, r: 4 }}
+                          activeDot={{ r: 6, fill: isDarkMode ? '#34d399' : '#10b981', strokeWidth: 2 }}
+                          connectNulls={false}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="text-4xl mb-4">📊</div>
+                    <h4 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      Sem Dados para Resumo
+                    </h4>
+                    <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Não há dados suficientes para gerar o resumo diário multi-métrica
+                    </p>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}
