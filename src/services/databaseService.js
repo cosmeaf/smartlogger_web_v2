@@ -39,7 +39,7 @@ const smartRequest = async (endpoint, options = {}) => {
       const response = await axios({
         ...options,
         url: `${workingApiUrl}${endpoint}`,
-        timeout: 5000,
+        timeout: 15000, // Aumentado para 15 segundos
         headers: {
           'Content-Type': 'application/json',
           ...options.headers
@@ -78,7 +78,7 @@ const smartRequest = async (endpoint, options = {}) => {
       const response = await axios({
         ...options,
         url: `${url}${endpoint}`,
-        timeout: 5000,
+        timeout: 15000, // Aumentado para 15 segundos
         headers: {
           'Content-Type': 'application/json',
           ...options.headers
@@ -178,6 +178,8 @@ const databaseService = {
   async getTcDevices() {
     try {
       console.log('🔄 Buscando dispositivos da tabela tc_devices...');
+      console.log('🌐 URLs disponíveis:', API_URLS);
+      console.log('📱 URL em cache:', workingApiUrl);
       
       const response = await smartRequest('/api/table/tc_devices', {
         method: 'GET'
@@ -189,6 +191,12 @@ const databaseService = {
       
     } catch (error) {
       console.error('❌ Erro ao buscar dispositivos:', error.message);
+      console.error('🔍 Detalhes do erro:', {
+        code: error.code,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        url: error.config?.url
+      });
       throw error;
     }
   },

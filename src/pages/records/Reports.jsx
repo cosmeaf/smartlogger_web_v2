@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Swal from 'sweetalert2';
-import { FaChartBar, FaFilter, FaTable, FaCalendarAlt, FaFileAlt, FaSpinner, FaMapMarkerAlt, FaPlay, FaPause, FaRedo, FaInfoCircle } from 'react-icons/fa';
+import { FaChartBar, FaChartLine, FaFilter, FaTable, FaCalendarAlt, FaFileAlt, FaSpinner, FaMapMarkerAlt, FaPlay, FaPause, FaRedo, FaInfoCircle } from 'react-icons/fa';
 import { useTheme } from '../../context/ThemeContext';
 import { useDevice } from '../../context/DeviceContext';
 import databaseService from '../../services/databaseService';
@@ -391,6 +391,105 @@ const Reports = () => {
     return selectedData;
   };
 
+  // Função para calcular índice de utilização por dia e viagem
+  const calculateUtilizationIndex = () => {
+    if (!reportData.length) return [];
+    
+    // Filtrar dados com IO19 (Trip Horímetro) e IO20 (Idle Time) válidos
+    const validData = reportData.filter(position => {
+      let attrs = position.attributes;
+      if (typeof attrs === 'string') {
+        try {
+          attrs = JSON.parse(attrs);
+        } catch {
+          return false;
+        }
+      }
+      
+      const io19 = attrs?.io19; // Trip Horímetro (tempo de trabalho ativo)
+      const io20 = attrs?.io20; // Idle Time (tempo ocioso)
+      
+      // Verificar se ambos os valores existem e são válidos (não zero)
+      return io19 !== undefined && io19 !== null && io19 > 0 &&
+             io20 !== undefined && io20 !== null && io20 >= 0;
+    });
+    
+    if (!validData.length) {
+      console.log('📈 Utilização: Nenhum dado válido encontrado para IO19 e IO20');
+      return [];
+    }
+    
+    // Agrupar dados por dia para calcular utilização diária
+    const dailyData = {};
+    
+    validData.forEach(position => {
+      let attrs = position.attributes;
+      if (typeof attrs === 'string') {
+        try {
+          attrs = JSON.parse(attrs);
+        } catch {
+          return;
+        }
+      }
+      
+      const io19 = Number(attrs?.io19) || 0; // Trip Horímetro (minutos de trabalho)
+      const io20 = Number(attrs?.io20) || 0; // Idle Time (minutos ociosos)
+      const time = position.devicetime || position.servertime;
+      
+      if (time && io19 > 0) { // Só considera se há tempo de trabalho
+        const date = new Date(time);
+        const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
+        
+        if (!dailyData[dateKey]) {
+          dailyData[dateKey] = {
+            date: dateKey,
+            tripHours: [],
+            idleHours: [],
+            timestamp: date.getTime(),
+            fullDate: date.toLocaleDateString('pt-BR')
+          };
+        }
+        
+        // Converter minutos para horas
+        dailyData[dateKey].tripHours.push(io19 / 60);
+        dailyData[dateKey].idleHours.push(io20 / 60);
+      }
+    });
+    
+    // Calcular índice de utilização para cada dia
+    const utilizationData = [];
+    
+    Object.values(dailyData).forEach(dayData => {
+      // Usar valores máximos do dia (representam o acumulado)
+      const maxTripHours = Math.max(...dayData.tripHours);
+      const maxIdleHours = Math.max(...dayData.idleHours);
+      
+      // Calcular utilização: Trip Hours / (Trip Hours + Idle Hours) * 100
+      const totalHours = maxTripHours + maxIdleHours;
+      
+      if (totalHours > 0) {
+        const utilizationPercentage = (maxTripHours / totalHours) * 100;
+        
+        utilizationData.push({
+          date: dayData.fullDate,
+          utilizacao: Number(utilizationPercentage.toFixed(1)),
+          tripHours: Number(maxTripHours.toFixed(2)),
+          idleHours: Number(maxIdleHours.toFixed(2)),
+          totalHours: Number(totalHours.toFixed(2)),
+          timestamp: dayData.timestamp,
+          fullDate: `${dayData.fullDate} - Utilização: ${utilizationPercentage.toFixed(1)}%`
+        });
+      }
+    });
+    
+    // Ordenar cronologicamente
+    utilizationData.sort((a, b) => a.timestamp - b.timestamp);
+    
+    console.log(`📈 Utilização: ${validData.length} registros válidos → ${utilizationData.length} dias com dados de utilização`);
+    
+    return utilizationData;
+  };
+
   // Função para calcular domínios dinâmicos do gráfico
   const getChartDomains = () => {
     const data = prepareIO18ChartData();
@@ -456,6 +555,40 @@ const Reports = () => {
 
     return { yDomain, xDomain };
   };
+
+  // Função para calcular domínios dinâmicos do gráfico de utilização
+  const getUtilizationChartDomains = () => {
+    const data = calculateUtilizationIndex();
+    if (!data.length) return { yDomain: [0, 100], xDomain: ['dataMin', 'dataMax'] };
+
+    // Calcular domínio Y (valores de Utilização em %)
+    const utilizationValues = data.map(item => item.utilizacao);
+    const minY = Math.min(...utilizationValues);
+    const maxY = Math.max(...utilizationValues);
+    
+    // Adicionar uma margem de 5% para melhor visualização
+    const yMargin = Math.max((maxY - minY) * 0.05, 2); // Margem mínima de 2%
+    const yDomain = [
+      Math.max(0, Number((minY - yMargin).toFixed(1))), // Não pode ser menor que 0
+      Math.min(100, Number((maxY + yMargin).toFixed(1))) // Não pode ser maior que 100
+    ];
+
+    // Calcular domínio X (timestamps) - ordem cronológica reversa
+    const timestamps = data.map(item => item.timestamp);
+    const minX = Math.min(...timestamps);
+    const maxX = Math.max(...timestamps);
+    
+    // Adicionar margem de tempo (2% da diferença total)
+    const timeRange = maxX - minX;
+    const timeMargin = timeRange * 0.02;
+    const xDomain = [
+      maxX + timeMargin, // Inverter: mais recente à esquerda
+      minX - timeMargin  // mais antigo à direita
+    ];
+
+    return { yDomain, xDomain };
+  };
+
 
   // Funções para controle de zoom
   const getAxisYDomain = (from, to, ref, offset) => {
@@ -3352,6 +3485,153 @@ const Reports = () => {
           </div>
         )}
 
+        {/* Gráfico de Índice de Utilização */}
+        {reportData.length > 0 && (
+          <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-lg border overflow-hidden mb-6`}>
+            {/* Header do Gráfico */}
+            <div className={`px-6 py-4 border-b ${isDarkMode ? 'border-gray-700 bg-gray-750' : 'border-gray-200 bg-gray-50'}`}>
+              <div className="flex flex-col md:flex-row md:items-center gap-4 justify-between">
+                <div className="flex items-center gap-2">
+                  <FaChartLine className={`text-lg ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`} />
+                  <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    Índice de Utilização
+                  </h3>
+                  <span className={`text-xs px-2 py-1 rounded-full ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-600'}`}>
+                    % eficiência
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className={`px-3 py-1 rounded-lg text-xs font-medium ${isDarkMode ? 'bg-gray-700 text-indigo-200' : 'bg-indigo-100 text-indigo-800'}`}>
+                    {calculateUtilizationIndex().length} pontos
+                  </div>
+                  {(() => {
+                    const data = calculateUtilizationIndex();
+                    if (data.length > 0) {
+                      const values = data.map(item => item.utilizacao);
+                      const min = Math.min(...values);
+                      const max = Math.max(...values);
+                      const avg = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1);
+                      
+                      return (
+                        <>
+                          <div className={`px-3 py-1 rounded-lg text-xs font-medium ${isDarkMode ? 'bg-gray-700 text-green-200' : 'bg-green-100 text-green-800'}`}>
+                            Min: {min.toFixed(1)}%
+                          </div>
+                          <div className={`px-3 py-1 rounded-lg text-xs font-medium ${isDarkMode ? 'bg-gray-700 text-red-200' : 'bg-red-100 text-red-800'}`}>
+                            Max: {max.toFixed(1)}%
+                          </div>
+                          <div className={`px-3 py-1 rounded-lg text-xs font-medium ${isDarkMode ? 'bg-gray-700 text-blue-200' : 'bg-blue-100 text-blue-800'}`}>
+                            Média: {avg}%
+                          </div>
+                        </>
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
+              </div>
+            </div>
+
+            {/* Conteúdo do Gráfico */}
+            <div className="p-6">
+              {calculateUtilizationIndex().length > 0 ? (
+                <div style={{ width: '100%', height: '300px' }}>
+                  <ResponsiveContainer>
+                    <LineChart 
+                      data={[...calculateUtilizationIndex()].reverse()} // Inverter dados para eixo X reverso
+                    >
+                      <CartesianGrid 
+                        strokeDasharray="3 3" 
+                        stroke={isDarkMode ? '#374151' : '#d1d5db'} 
+                        strokeWidth={1}
+                      />
+                      <XAxis 
+                        dataKey="date" 
+                        stroke={isDarkMode ? '#9ca3af' : '#4b5563'}
+                        fontSize={12}
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                        type="category"
+                        scale="auto"
+                        reversed={true} // Inverter eixo X
+                      />
+                      <YAxis 
+                        stroke={isDarkMode ? '#9ca3af' : '#4b5563'}
+                        fontSize={12}
+                        domain={getUtilizationChartDomains().yDomain}
+                        type="number"
+                        scale="linear"
+                        tickCount={6}
+                        label={{ 
+                          value: 'Utilização (%)', 
+                          angle: -90, 
+                          position: 'insideLeft',
+                          style: { textAnchor: 'middle', fill: isDarkMode ? '#9ca3af' : '#4b5563' }
+                        }}
+                      />
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
+                          border: `1px solid ${isDarkMode ? '#374151' : '#d1d5db'}`,
+                          borderRadius: '8px',
+                          color: isDarkMode ? '#f9fafb' : '#111827',
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                        }}
+                        labelStyle={{
+                          color: isDarkMode ? '#f9fafb' : '#111827',
+                          fontWeight: 'bold'
+                        }}
+                        formatter={(value, name, props) => [
+                          `${value.toFixed(1)}%`,
+                          'Utilização'
+                        ]}
+                        labelFormatter={(label, payload) => {
+                          if (payload && payload.length > 0) {
+                            const data = payload[0].payload;
+                            return `${data.fullDate || label}`;
+                          }
+                          return label;
+                        }}
+                        cursor={{ stroke: isDarkMode ? '#6366f1' : '#4f46e5', strokeWidth: 1 }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="utilizacao" 
+                        stroke={isDarkMode ? '#6366f1' : '#4f46e5'}
+                        strokeWidth={2}
+                        dot={{ 
+                          fill: isDarkMode ? '#6366f1' : '#4f46e5', 
+                          strokeWidth: 2, 
+                          r: 4,
+                          stroke: isDarkMode ? '#818cf8' : '#6366f1'
+                        }}
+                        activeDot={{ 
+                          r: 6, 
+                          fill: isDarkMode ? '#818cf8' : '#6366f1',
+                          stroke: isDarkMode ? '#a5b4fc' : '#818cf8',
+                          strokeWidth: 2
+                        }}
+                        connectNulls={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="text-4xl mb-4">📈</div>
+                  <h4 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    Sem Dados de Utilização
+                  </h4>
+                  <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Não há dados de Horímetro da Viagem (IO19) e Tempo Ocioso (IO20) disponíveis para calcular a utilização
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Mapa de Calor */}
         {reportData.length > 0 && validHeatmapPoints.length > 0 && (
           <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-lg border overflow-hidden mb-6`}>
@@ -3612,11 +3892,11 @@ const Reports = () => {
                     <th className={`px-4 py-3 text-left font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Direção</th>
                     <th className={`px-4 py-3 text-left font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Tipo</th>
                     <th className={`px-4 py-3 text-left font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>IO1</th>
-                    <th className={`px-4 py-3 text-left font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>IO16</th>
-                    <th className={`px-4 py-3 text-left font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>IO17</th>
-                    <th className={`px-4 py-3 text-left font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>IO18</th>
-                    <th className={`px-4 py-3 text-left font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>IO19</th>
-                    <th className={`px-4 py-3 text-left font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>IO20</th>
+                    <th className={`px-4 py-3 text-left font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Odômetro gps</th>
+                    <th className={`px-4 py-3 text-left font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Distância da Viagem</th>
+                    <th className={`px-4 py-3 text-left font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Horímetro</th>
+                    <th className={`px-4 py-3 text-left font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Horímetro da Viagem</th>
+                    <th className={`px-4 py-3 text-left font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Tempo Ocioso</th>
                     <th className={`px-4 py-3 text-left font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Atributos</th>
                   </tr>
                 </thead>
