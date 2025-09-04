@@ -312,13 +312,18 @@ const Login = () => {
           width: isMobile ? 360 : 440,
           borderRadius: 4,
           zIndex: 10,
-          bgcolor: isDarkMode ? 'grey.800' : 'background.paper',
+          bgcolor: isDarkMode 
+            ? 'rgba(66, 66, 66, 0.75)' 
+            : 'rgba(255, 255, 255, 0.8)',
           boxShadow: isDarkMode 
-            ? '0 16px 32px rgba(0, 0, 0, 0.3), 0 4px 8px rgba(0, 0, 0, 0.2)' 
-            : '0 16px 32px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.08)',
+            ? '0 16px 32px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.3)' 
+            : '0 16px 32px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1)',
           position: 'relative',
-          backdropFilter: 'blur(10px)',
-          border: isDarkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.8)',
+          backdropFilter: 'blur(20px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+          border: isDarkMode 
+            ? '1px solid rgba(255, 255, 255, 0.15)' 
+            : '1px solid rgba(255, 255, 255, 0.6)',
           animation: 'fadeInUp 0.6s ease-out',
           '@keyframes fadeInUp': {
             '0%': {

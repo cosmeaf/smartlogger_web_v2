@@ -248,17 +248,22 @@ const Register = () => {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          p: isMobile ? 3 : 5,
-          width: isMobile ? 360 : 440,
+          p: isMobile ? 2.5 : 3.5,
+          width: isMobile ? 350 : 420,
           borderRadius: 4,
           zIndex: 10,
           position: 'relative',
-          bgcolor: isDarkMode ? 'grey.800' : 'background.paper',
+          bgcolor: isDarkMode 
+            ? 'rgba(66, 66, 66, 0.75)' 
+            : 'rgba(255, 255, 255, 0.8)',
           boxShadow: isDarkMode 
-            ? '0 16px 32px rgba(0, 0, 0, 0.3), 0 4px 8px rgba(0, 0, 0, 0.2)' 
-            : '0 16px 32px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.08)',
-          backdropFilter: 'blur(10px)',
-          border: isDarkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.8)',
+            ? '0 16px 32px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.3)' 
+            : '0 16px 32px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1)',
+          backdropFilter: 'blur(20px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+          border: isDarkMode 
+            ? '1px solid rgba(255, 255, 255, 0.15)' 
+            : '1px solid rgba(255, 255, 255, 0.6)',
           animation: 'fadeInUp 0.6s ease-out',
           '@keyframes fadeInUp': {
             '0%': {
@@ -278,7 +283,7 @@ const Register = () => {
             justifyContent: 'center',
             alignItems: 'center',
             width: '100%',
-            mb: isMobile ? 2 : 3,
+            mb: isMobile ? 1.5 : 2,
             mt: isMobile ? 0 : -0.5,
             position: 'relative'
           }}
@@ -289,8 +294,8 @@ const Register = () => {
                 ? 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.8) 100%)' 
                 : 'linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(248,250,252,0.7) 100%)',
               borderRadius: 2,
-              px: isMobile ? 1.5 : 2,
-              py: isMobile ? 0.8 : 1,
+              px: isMobile ? 1.2 : 1.5,
+              py: isMobile ? 0.6 : 0.8,
               display: 'inline-block',
               boxShadow: isDarkMode 
                 ? '0 4px 16px rgba(0, 0, 0, 0.2)' 
@@ -305,7 +310,7 @@ const Register = () => {
               src="/logo.png"
               alt="Logo SmartLogger"
               style={{
-                width: isMobile ? '160px' : '180px',
+                width: isMobile ? '140px' : '160px',
                 height: 'auto',
                 display: 'block',
                 objectFit: 'contain'
@@ -314,13 +319,13 @@ const Register = () => {
           </Box>
         </Box>
         <Typography
-          variant={isMobile ? "h5" : "h5"}
+          variant={isMobile ? "h6" : "h5"}
           fontWeight={700}
           gutterBottom
           sx={{
             color: isDarkMode ? 'grey.100' : 'text.primary',
-            mb: isMobile ? 0.8 : 1,
-            fontSize: isMobile ? '1.5rem' : '1.6rem',
+            mb: isMobile ? 0.5 : 0.8,
+            fontSize: isMobile ? '1.3rem' : '1.4rem',
             background: isDarkMode 
               ? 'linear-gradient(135deg, #ffffff 0%, #e3f2fd 100%)' 
               : 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
@@ -333,12 +338,12 @@ const Register = () => {
         >
           Criar Conta
         </Typography>
-        <Typography variant={isMobile ? "body2" : "body1"} mb={isMobile ? 2 : 2.5} align="center"
+        <Typography variant={isMobile ? "body2" : "body1"} mb={isMobile ? 1.5 : 2} align="center"
           sx={{ 
             color: isDarkMode ? 'grey.300' : 'text.secondary',
-            fontSize: isMobile ? '0.9rem' : '1rem',
+            fontSize: isMobile ? '0.85rem' : '0.95rem',
             fontWeight: 400,
-            lineHeight: 1.4,
+            lineHeight: 1.3,
             opacity: 0.9
           }}>
           Preencha os campos para criar sua conta
@@ -350,16 +355,16 @@ const Register = () => {
             border: 1, 
             borderColor: 'error.main', 
             color: isDarkMode ? 'error.light' : 'error.dark', 
-            px: isMobile ? 1 : 2, 
-            py: isMobile ? 0.3 : 1, 
+            px: isMobile ? 1 : 1.5, 
+            py: isMobile ? 0.3 : 0.5, 
             borderRadius: 1, 
-            mb: isMobile ? 1 : 2,
+            mb: isMobile ? 1 : 1.5,
             width: '100%'
           }}>
             <Typography variant="body2"
               sx={{ 
                 color: isDarkMode ? 'grey.100' : 'error.dark',
-                fontSize: isMobile ? '12px' : 'inherit'
+                fontSize: isMobile ? '11px' : '12px'
               }}>
               {error}
             </Typography>
@@ -367,7 +372,7 @@ const Register = () => {
         )}
 
         <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
-          <Box sx={{ display: 'flex', gap: isMobile ? 1 : 2, flexDirection: isMobile ? 'column' : 'row' }}>
+          <Box sx={{ display: 'flex', gap: isMobile ? 1 : 1.5, flexDirection: isMobile ? 'column' : 'row' }}>
             <TextField
               margin={isMobile ? "dense" : "normal"}
               required
@@ -501,10 +506,10 @@ const Register = () => {
             fullWidth
             variant="contained"
             sx={{ 
-              py: isMobile ? 1.5 : 1.8, 
-              mb: isMobile ? 1.5 : 2,
-              mt: isMobile ? 0.5 : 0,
-              fontSize: isMobile ? '15px' : '16px',
+              py: isMobile ? 1.2 : 1.5, 
+              mb: isMobile ? 1 : 1.5,
+              mt: isMobile ? 0.3 : 0.5,
+              fontSize: isMobile ? '14px' : '15px',
               fontWeight: 600,
               borderRadius: 2,
               background: isDarkMode 
@@ -537,7 +542,7 @@ const Register = () => {
               }
             }}
             disabled={isLoading}
-            size={isMobile ? "large" : "large"}
+            size={isMobile ? "medium" : "large"}
           >
             {isLoading ? (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -563,16 +568,16 @@ const Register = () => {
           </Button>
         </Box>
 
-        <Typography variant="body1" align="center" mt={isMobile ? 0.5 : 2}
+        <Typography variant="body1" align="center" mt={isMobile ? 0.3 : 1}
           sx={{ 
             color: isDarkMode ? 'grey.200' : 'text.primary',
-            fontSize: '15px',
+            fontSize: isMobile ? '13px' : '14px',
             fontWeight: 500
           }}>
           Já tem uma conta?{' '}
           <Link component="button" variant="body1" onClick={() => navigate('/')}
             sx={{ 
-              fontSize: '15px',
+              fontSize: isMobile ? '13px' : '14px',
               fontWeight: 600,
               color: isDarkMode ? 'primary.light' : 'primary.main',
               textDecoration: 'none',
@@ -600,15 +605,15 @@ const Register = () => {
             Faça login
           </Link>
         </Typography>
-        <Typography variant="body2" align="center" mt={isMobile ? 0.3 : 1}
+        <Typography variant="body2" align="center" mt={isMobile ? 0.2 : 0.5}
           sx={{ 
             color: isDarkMode ? 'grey.200' : 'text.primary',
-            fontSize: isMobile ? '13px' : '14px'
+            fontSize: isMobile ? '12px' : '13px'
           }}>
           <Link component="button" variant="body2" onClick={() => navigate('/recovery')}
             sx={{ 
               color: isDarkMode ? 'primary.light' : 'primary.main',
-              fontSize: isMobile ? '13px' : '14px',
+              fontSize: isMobile ? '12px' : '13px',
               textDecoration: 'none',
               '&:hover': {
                 textDecoration: 'underline'
@@ -619,14 +624,14 @@ const Register = () => {
         </Typography>
 
         <Box sx={{ 
-          mt: isMobile ? 1.5 : 2, 
+          mt: isMobile ? 1 : 1.5, 
           textAlign: 'center',
           mb: 0
         }}>
           <Typography variant="caption" 
             sx={{ 
               color: isDarkMode ? 'grey.400' : 'text.secondary',
-              fontSize: isMobile ? '11px' : '12px',
+              fontSize: isMobile ? '10px' : '11px',
               opacity: 0.8
             }}>
             Para suporte técnico, acesse{' '}
