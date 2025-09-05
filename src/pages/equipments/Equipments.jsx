@@ -522,7 +522,7 @@ const Equipments = () => {
    */
   const getMaintenanceStatus = (remaining) => {
     if (remaining < 0) return 'URGENTE';
-    if (remaining < 100) return 'ATENÇÃO';
+    if (remaining < 50) return 'ATENÇÃO';
     return 'OK';
   };
 
@@ -575,7 +575,7 @@ const Equipments = () => {
       maintenance.remaining_hours !== undefined &&
       maintenance.remaining_hours !== null &&
       maintenance.remaining_hours >= 0 &&
-      maintenance.remaining_hours < 100 &&
+      maintenance.remaining_hours < 50 &&
       maintenance.name
     );
 
@@ -954,7 +954,7 @@ const Equipments = () => {
     // Sistema de cores original baseado na manutenção
     const remaining = equipment.min_remaining_hours;
     if (remaining < 0) return { backgroundColor: 'rgba(248, 151, 151, 0.8)' }; // Vermelho
-    if (remaining < 100) return { backgroundColor: 'rgba(245, 245, 139, 0.8)' }; // Amarelo
+    if (remaining < 50) return { backgroundColor: 'rgba(245, 245, 139, 0.8)' }; // Amarelo
     return { backgroundColor: 'rgba(153, 243, 153, 0.8)' }; // Verde
   };
 

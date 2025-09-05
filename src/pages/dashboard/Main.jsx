@@ -250,8 +250,8 @@ const Main = () => {
               name: 'Máquinas',
               data: [
                 mergedEquipments.filter(eq => eq.min_remaining_hours < 0).length,
-                mergedEquipments.filter(eq => eq.min_remaining_hours >= 0 && eq.min_remaining_hours < 100).length,
-                mergedEquipments.filter(eq => eq.min_remaining_hours >= 100).length
+                mergedEquipments.filter(eq => eq.min_remaining_hours >= 0 && eq.min_remaining_hours < 50).length,
+                mergedEquipments.filter(eq => eq.min_remaining_hours >= 50).length
               ],
             },
           ],
