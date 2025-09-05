@@ -608,6 +608,45 @@ const Equipments = () => {
     const remaining = equipment.min_remaining_hours;
     const status = getMaintenanceStatus(remaining);
     
+    // Verifica se alguma manutenção deste equipamento tem O.S. ativo
+    const hasActiveOS = maintenances.some(maintenance => 
+      String(maintenance.equipment) === String(equipment.id) && maintenance.os === true
+    );
+    
+    // Se tem O.S. ativo, mostra status especial de manutenção
+    if (hasActiveOS) {
+      // Busca as manutenções com O.S. ativo para este equipamento
+      const activeOSMaintenances = maintenances.filter(maintenance => 
+        String(maintenance.equipment) === String(equipment.id) && maintenance.os === true
+      );
+      
+      const tooltipContent = activeOSMaintenances.length > 1 
+        ? `Ordens de Serviço em Andamento (${activeOSMaintenances.length}):\n\n${activeOSMaintenances.map((m, index) => 
+            `${index + 1}. ${m.name}`
+          ).join('\n')}`
+        : `Ordem de Serviço em Andamento:\n${activeOSMaintenances[0]?.name || 'Manutenção'}`;
+
+      return (
+        <div className="text-center">
+          <div 
+            className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 border border-blue-300 cursor-pointer"
+            onMouseEnter={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              showTooltip(
+                tooltipContent,
+                rect.left + rect.width / 2,
+                rect.top - 10
+              );
+            }}
+            onMouseLeave={hideTooltip}
+          >
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5"></div>
+            <span>ORDEM DE SERVIÇO</span>
+          </div>
+        </div>
+      );
+    }
+    
     if (status === 'URGENTE') {
       const maintenanceInfo = getOverdueMaintenanceInfo(equipment.id);
       
@@ -900,11 +939,23 @@ const Equipments = () => {
   /**
    * ✅ Cálculo de Coloração das Linhas
    */
-  // Esquema de cores inline, mesmas cores para ambos os temas
-  const getRowStyle = (remaining) => {
-    if (remaining < 0) return { backgroundColor: 'rgba(248, 151, 151, 0.8)' };
-    if (remaining < 100) return { backgroundColor: 'rgba(245, 245, 139, 0.8)' };
-    return { backgroundColor: 'rgba(153, 243, 153, 0.8)' };
+  // Esquema de cores: azul para O.S. ativo, senão mantém o sistema atual (verde/amarelo/vermelho)
+  const getRowStyle = (equipment) => {
+    // Verifica se alguma manutenção deste equipamento tem O.S. ativo
+    const hasActiveOS = maintenances.some(maintenance => 
+      String(maintenance.equipment) === String(equipment.id) && maintenance.os === true
+    );
+    
+    // Se tem O.S. ativo, fica azul
+    if (hasActiveOS) {
+      return { backgroundColor: 'rgba(59, 130, 246, 0.3)' }; // Azul suave
+    }
+    
+    // Sistema de cores original baseado na manutenção
+    const remaining = equipment.min_remaining_hours;
+    if (remaining < 0) return { backgroundColor: 'rgba(248, 151, 151, 0.8)' }; // Vermelho
+    if (remaining < 100) return { backgroundColor: 'rgba(245, 245, 139, 0.8)' }; // Amarelo
+    return { backgroundColor: 'rgba(153, 243, 153, 0.8)' }; // Verde
   };
 
   /**
@@ -1584,7 +1635,7 @@ const Equipments = () => {
               {currentItems.map((equipment) => (
                 <tr
                   key={equipment.id}
-                  style={getRowStyle(equipment.min_remaining_hours)}
+                  style={getRowStyle(equipment)}
                   className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
                 >
                   <td className={`${isMobile ? 'py-1 px-1 text-xs' : 'py-3 px-4'}`}>

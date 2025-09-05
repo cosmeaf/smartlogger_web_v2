@@ -358,6 +358,45 @@ const Maintenance = () => {
     setObsValue('');
   };
 
+  const handleToggleOS = async (maintenanceId, currentOSStatus) => {
+    try {
+      await apiService.patch(`/maintenances/${maintenanceId}/`, {
+        os: !currentOSStatus
+      });
+      
+      // Atualiza o estado local
+      const updatedRecords = maintenanceRecords.map((maintenance) =>
+        maintenance.id === maintenanceId
+          ? { ...maintenance, os: !currentOSStatus }
+          : maintenance
+      );
+      setMaintenanceRecords(updatedRecords);
+      
+      // Mostra notificação de sucesso
+      toast.success(`O.S. ${!currentOSStatus ? 'ativada' : 'desativada'} com sucesso!`, {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: isDarkMode ? "dark" : "light"
+      });
+      
+    } catch (error) {
+      console.error('Erro ao atualizar O.S.:', error.message);
+      toast.error('Erro ao atualizar O.S. Tente novamente.', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: isDarkMode ? "dark" : "light"
+      });
+    }
+  };
+
   if (loading) {
     return <LoadPage />;
   }
@@ -510,6 +549,24 @@ const Maintenance = () => {
                               Restante: {maintenance.remaining_hours}h
                             </div>
                             <div className="flex items-center gap-2 text-xs mt-2">
+                              <span className="font-medium">O.S.:</span>
+                              <label className="flex items-center gap-1 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={maintenance.os}
+                                  onChange={() => handleToggleOS(maintenance.id, maintenance.os)}
+                                  className={`w-3 h-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all duration-200 ${
+                                    isDarkMode 
+                                      ? 'bg-gray-700 border-gray-600' 
+                                      : 'bg-white border-gray-300'
+                                  }`}
+                                />
+                                <span className={`text-xs ${maintenance.os ? 'text-green-500' : 'text-gray-500'}`}>
+                                  {maintenance.os ? 'Ativo' : 'Inativo'}
+                                </span>
+                              </label>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs mt-2">
                               <span className="font-medium">Obs:</span>
                               <span 
                                 className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded flex-1"
@@ -539,8 +596,13 @@ const Maintenance = () => {
                         <input
                           type="checkbox"
                           checked={maintenance.os}
-                          onChange={() => {}}
-                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          onChange={() => handleToggleOS(maintenance.id, maintenance.os)}
+                          className={`w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer transition-all duration-200 ${
+                            isDarkMode 
+                              ? 'bg-gray-700 border-gray-600' 
+                              : 'bg-white border-gray-300'
+                          }`}
+                          title={`${maintenance.os ? 'Desativar' : 'Ativar'} O.S.`}
                         />
                       </td>
                       

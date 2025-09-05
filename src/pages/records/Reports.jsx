@@ -3814,7 +3814,7 @@ const Reports = () => {
                         if (typeof attrs === 'string') {
                           try { attrs = JSON.parse(attrs); } catch { return false; }
                         }
-                        return attrs && (attrs.io19 !== undefined || attrs.io20 !== undefined);
+                        return attrs && (attrs.io19 !== undefined || attrs.io20 !== undefined) && attrs.type === 'ALT';
                       });
                       return data.length;
                     })()} pontos
@@ -3825,7 +3825,7 @@ const Reports = () => {
                       if (typeof attrs === 'string') {
                         try { attrs = JSON.parse(attrs); } catch { return false; }
                       }
-                      return attrs && (attrs.io19 !== undefined || attrs.io20 !== undefined);
+                      return attrs && (attrs.io19 !== undefined || attrs.io20 !== undefined) && attrs.type === 'ALT';
                     });
                     
                     if (data.length > 0) {
@@ -3871,7 +3871,7 @@ const Reports = () => {
                     if (typeof attrs === 'string') {
                       try { attrs = JSON.parse(attrs); } catch { return false; }
                     }
-                    return attrs && (attrs.io19 !== undefined || attrs.io20 !== undefined);
+                    return attrs && (attrs.io19 !== undefined || attrs.io20 !== undefined) && attrs.type === 'ALT';
                   })
                   .map(position => {
                     let attrs = position.attributes;
